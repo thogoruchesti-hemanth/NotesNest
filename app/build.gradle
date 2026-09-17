@@ -122,6 +122,7 @@ dependencies {
 
     implementation libs.play.services.ads
     implementation libs.billingclient
+    implementation libs.play.integrity
 
     testImplementation libs.junit
     androidTestImplementation libs.ext.junit
