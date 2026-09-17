@@ -2,7 +2,6 @@
 
     <string name="app_name">NotesNest</string>
     <string name="default_web_client_id">787609574642-ri3pfeqei3mcoboka870jfms2e97grn3.apps.googleusercontent.com</string>
-    <string name="text_splash_screen_logo">Splash Screen Logo</string>
     <string name="text_continue_with_google">Continue with Google</string>
     <string name="text_login">Login</string>
     <string name="text_confirm_password">Confirm Password</string>
@@ -61,7 +60,6 @@
     <string name="text_on_boarding_image">onBoarding image</string>
     <string name="text_next">Next</string>
     <string name="text_get_started">Get Started</string>
-    <string name="text_welcome_to_notesnest">Welcome to NotesNest</string>
     <string name="text_manage_categories">Manage Categories</string>
     <string name="text_add_category">Add Category</string>
     <string name="text_add_new_category">Add new category</string>
@@ -123,7 +121,6 @@
     <string name="upgrade_to_premium">Upgrade to Premium</string>
     <string name="text_got_it">GOT IT</string>
     <string name="text_what_s_new">What\'s New ✨</string>
-    <string name="text_your_complete_productivity_hub">Your Complete Productivity Hub</string>
     <string name="text_connected">Connected</string>
     <string name="text_backing_up">Backing up&#8230;</string>
     <string name="text_backup_complete">✓ Backup complete</string>
@@ -224,12 +221,21 @@
     <string name="text_choose_note_color">Choose Note Color</string>
 
     <!-- Unsupported Version Dialog -->
-    <string name="unsupported_version_title">Unsupported Android Version</string>
-    <string name="unsupported_version_message">This app is not supported on this Android version. Please upgrade your device to Android 11 or higher to use NotesNest.</string>
-    <string name="unsupported_version_exit">Exit App</string>
     <string name="text_snooze">Snooze</string>
     <string name="text_15_min">+15 min</string>
     <string name="text_snooze_icon">Snooze Icon</string>
     <string name="text_completion_icon">Completion Icon</string>
+
+
+    <!-- Onboarding Screen -->
+    <string name="onboarding_title_1">Capture Everything in One Place</string>
+    <string name="onboarding_desc_1">Jot down notes, save quick thoughts, and keep your ideas neatly organized with a clean, distraction-free editor.</string>
+
+    <string name="onboarding_title_2">Smart Reminders for Tasks &amp; Events</string>
+    <string name="onboarding_desc_2">Never miss a task, birthday, or important event. Set smart reminders and get timely notifications right when you need them.</string>
+
+    <string name="onboarding_title_3">Fast, Private, and Always Available</string>
+    <string name="onboarding_desc_3">Your notes stay 100% on your device. Lightning-fast, fully offline, and completely private—no internet required.</string>
+
     <string name="date_time_format">%1$s, %2$s</string>
 </resources>

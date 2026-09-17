@@ -78,7 +78,12 @@
             android:exported="false" />
 
         <activity
-            android:name="com.example.NotesNest.activity.SplashScreenActivity"
+            android:name="com.example.NotesNest.activity.LoginActivity"
+            android:windowSoftInputMode="adjustResize"
+            android:exported="true" />
+
+        <activity
+            android:name="com.example.NotesNest.activity.MainActivity"
             android:exported="true"
             android:theme="@style/Theme.App.Starting">
             <intent-filter>
@@ -86,15 +91,6 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-
-        <activity
-            android:name="com.example.NotesNest.activity.LoginActivity"
-            android:windowSoftInputMode="adjustResize"
-            android:exported="true" />
-
-        <activity
-            android:name="com.example.NotesNest.activity.MainActivity"
-            android:exported="true" />
 
         <activity
             android:name="com.example.NotesNest.activity.SyncOverlayActivity"

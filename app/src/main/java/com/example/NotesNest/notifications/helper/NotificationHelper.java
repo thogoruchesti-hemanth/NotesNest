@@ -164,7 +164,7 @@ public class NotificationHelper {
         builder.setSmallIcon(
                 smallIconRes != null && smallIconRes != 0
                         ? smallIconRes
-                        : R.drawable.splash_logo_dark
+                        : R.drawable.ic_splash_logo_black
         );
 
         // Accent color
