@@ -7,6 +7,11 @@
 /.idea/workspace.xml
 /.idea/navEditor.xml
 /.idea/assetWizardSettings.xml
+.idea/*
+!.idea/codeStyles/
+!.idea/inspectionProfiles/
+
+
 .DS_Store
 /build
 /captures
@@ -24,3 +29,4 @@ local.properties
 key.properties
 *.jks
 *.keystore
+
