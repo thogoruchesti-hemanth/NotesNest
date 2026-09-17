@@ -27,6 +27,7 @@ googleApiClientAndroid = "2.7.0"
 googleApiServicesDrive = "v3-rev20230212-2.0.0"
 credentials = "1.6.0"
 googleid = "1.2.0"
+playIntegrity = "1.6.0"
 
 [libraries]
 junit = { group = "junit", name = "junit", version.ref = "junit" }
@@ -52,6 +53,7 @@ firebase-analytics = { group = "com.google.firebase", name = "firebase-analytics
 firebase-functions = { group = "com.google.firebase", name = "firebase-functions" }
 play-services-ads = { group = "com.google.android.gms", name = "play-services-ads", version.ref = "playServicesAds" }
 billingclient = { group = "com.android.billingclient", name = "billing", version.ref = "billing" }
+play-integrity = { group = "com.google.android.play", name = "integrity", version.ref = "playIntegrity" }
 androidx-webkit = { group = "androidx.webkit", name = "webkit", version.ref = "webkit" }
 androidx-viewpager2 = { group = "androidx.viewpager2", name = "viewpager2", version.ref = "viewpager2" }
 shimmer = { group = "com.facebook.shimmer", name = "shimmer", version.ref = "shimmer" }
