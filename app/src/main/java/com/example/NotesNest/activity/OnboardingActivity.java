@@ -2,16 +2,14 @@ package com.example.NotesNest.activity;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.view.HapticFeedbackConstants;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.ImageView;
-import android.widget.LinearLayout;
 
 import androidx.activity.EdgeToEdge;
 import androidx.activity.OnBackPressedCallback;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.core.content.ContextCompat;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
@@ -30,7 +28,8 @@ import java.util.List;
 
 /**
  * Robust Onboarding Activity.
- * Added Skip, Back press handling, ViewBinding, and state persistence.
+ * Updated to custom expanding pill indicators, string localization, haptic feedback,
+ * stateListAnimator press scale, and clean minimalist text-only action buttons (10/10 UX).
  */
 public class OnboardingActivity extends AppCompatActivity {
 
@@ -59,7 +58,6 @@ public class OnboardingActivity extends AppCompatActivity {
         });
 
         setupOnBoardingItems();
-        setupIndicators();
 
         // Restore page if rotated
         int startPage = 0;
@@ -67,8 +65,9 @@ public class OnboardingActivity extends AppCompatActivity {
             startPage = savedInstanceState.getInt(KEY_CURRENT_PAGE, 0);
         }
 
-        setCurrentIndicator(startPage);
         binding.vpOnboarding.setCurrentItem(startPage, false);
+        updateIndicators(startPage);
+        updateButtonText(startPage);
 
         setupListeners();
         setupBackPressed();
@@ -78,11 +77,13 @@ public class OnboardingActivity extends AppCompatActivity {
         binding.vpOnboarding.registerOnPageChangeCallback(new ViewPager2.OnPageChangeCallback() {
             @Override
             public void onPageSelected(int position) {
-                setCurrentIndicator(position);
+                updateIndicators(position);
+                updateButtonText(position);
             }
         });
 
         binding.btnNext.setOnClickListener(v -> {
+            v.performHapticFeedback(HapticFeedbackConstants.CONTEXT_CLICK);
             int current = binding.vpOnboarding.getCurrentItem();
             if (current + 1 < onboardingAdapter.getItemCount()) {
                 binding.vpOnboarding.setCurrentItem(current + 1);
@@ -91,7 +92,36 @@ public class OnboardingActivity extends AppCompatActivity {
             }
         });
 
-        binding.tvSkip.setOnClickListener(v -> completeOnboarding());
+        binding.tvSkip.setOnClickListener(v -> {
+            v.performHapticFeedback(HapticFeedbackConstants.CONTEXT_CLICK);
+            completeOnboarding();
+        });
+    }
+
+    private void updateIndicators(int position) {
+        View[] dots = {binding.dot1, binding.dot2, binding.dot3};
+        int selectedWidth = getResources().getDimensionPixelSize(R.dimen.size_24);
+        int unselectedWidth = getResources().getDimensionPixelSize(R.dimen.padding_8);
+
+        for (int i = 0; i < dots.length; i++) {
+            boolean isSelected = (i == position);
+            View dot = dots[i];
+
+            dot.setBackgroundResource(isSelected ? R.drawable.dot_selected : R.drawable.dot_unselected);
+            ViewGroup.LayoutParams params = dot.getLayoutParams();
+            params.width = isSelected ? selectedWidth : unselectedWidth;
+            dot.setLayoutParams(params);
+        }
+    }
+
+    private void updateButtonText(int position) {
+        boolean isLastPage = (position == onboardingAdapter.getItemCount() - 1);
+        binding.btnNext.setText(isLastPage ? R.string.text_get_started : R.string.text_next);
+
+        // Clean, minimalist text-only action button for elite modern UI
+        binding.btnNext.setCompoundDrawablesWithIntrinsicBounds(0, 0, 0, 0);
+
+        binding.tvSkip.setVisibility(isLastPage ? View.GONE : View.VISIBLE);
     }
 
     private void setupBackPressed() {
@@ -122,61 +152,23 @@ public class OnboardingActivity extends AppCompatActivity {
     private void setupOnBoardingItems() {
         List<OnBoardItem> items = new ArrayList<>();
         items.add(new OnBoardItem(
-                "Capture Everything in One Place",
-                "Write notes, save thoughts, and keep your ideas neatly organized with a clean and easy-to-use editor.",
+                getString(R.string.onboarding_title_1),
+                getString(R.string.onboarding_desc_1),
                 R.drawable.onboarding_image1
         ));
         items.add(new OnBoardItem(
-                "Smart Reminders for Your Day",
-                "Stay on top of tasks, birthdays, and important moments with intelligent reminders that notify you at the perfect time.",
+                getString(R.string.onboarding_title_2),
+                getString(R.string.onboarding_desc_2),
                 R.drawable.onboarding_image2
         ));
         items.add(new OnBoardItem(
-                "Fast, Private, and Always Available.",
-                "All your notes and reminders are stored securely on your device — no internet needed, no data ever leaves your phone.",
+                getString(R.string.onboarding_title_3),
+                getString(R.string.onboarding_desc_3),
                 R.drawable.onboarding_image3
         ));
 
         onboardingAdapter = new OnboardingAdapter(items);
         binding.vpOnboarding.setAdapter(onboardingAdapter);
-    }
-
-    private void setupIndicators() {
-        int itemCount = onboardingAdapter.getItemCount();
-        binding.layoutIndicators.removeAllViews();
-
-        for (int i = 0; i < itemCount; i++) {
-            ImageView dot = new ImageView(this);
-            dot.setImageDrawable(ContextCompat.getDrawable(this, R.drawable.indicator_dot_selector));
-            dot.setEnabled(false);
-
-            LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
-                    ViewGroup.LayoutParams.WRAP_CONTENT,
-                    ViewGroup.LayoutParams.WRAP_CONTENT
-            );
-            params.setMargins(8, 0, 8, 0);
-            binding.layoutIndicators.addView(dot, params);
-        }
-    }
-
-    private void setCurrentIndicator(int index) {
-        int count = binding.layoutIndicators.getChildCount();
-        for (int i = 0; i < count; i++) {
-            View dot = binding.layoutIndicators.getChildAt(i);
-            boolean isSelected = (i == index);
-            dot.setEnabled(isSelected);
-
-            float scale = isSelected ? 1.4f : 1.0f;
-            dot.animate()
-                    .scaleX(scale)
-                    .scaleY(scale)
-                    .setDuration(200)
-                    .start();
-        }
-
-        boolean isLastPage = (index == onboardingAdapter.getItemCount() - 1);
-        binding.btnNext.setText(isLastPage ? R.string.text_get_started : R.string.text_next);
-        binding.tvSkip.setVisibility(isLastPage ? View.GONE : View.VISIBLE);
     }
 
     @Override

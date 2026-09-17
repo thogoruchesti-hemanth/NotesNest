@@ -9,6 +9,7 @@ import com.example.NotesNest.utils.AdManager;
 import com.example.NotesNest.utils.AnalyticsHelper;
 import com.example.NotesNest.utils.AppPreferences;
 import com.example.NotesNest.utils.AppToast;
+import com.example.NotesNest.utils.ThemeManager;
 import com.google.android.gms.security.ProviderInstaller;
 import com.google.firebase.FirebaseApp;
 
@@ -30,6 +31,9 @@ public class NotesApplication extends Application {
 
         // 0. Initialize App Preferences
         AppPreferences.init(this);
+
+        // 0.1. Apply saved theme mode globally before any UI or Splash window is inflated
+        ThemeManager.applyTheme();
 
         // 1. Initialize Firebase
         FirebaseApp.initializeApp(this);

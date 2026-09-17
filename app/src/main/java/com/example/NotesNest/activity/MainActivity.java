@@ -7,6 +7,7 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.os.Build;
 import android.os.Bundle;
 import android.view.View;
 import android.view.ViewGroup;
@@ -17,16 +18,20 @@ import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.graphics.Insets;
+import androidx.core.splashscreen.SplashScreen;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
+import androidx.interpolator.view.animation.FastOutSlowInInterpolator;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 
 import com.example.NotesNest.R;
 import com.example.NotesNest.databases.AppDatabase;
 import com.example.NotesNest.utils.AnalyticsHelper;
 import com.example.NotesNest.utils.AppPreferences;
+import com.example.NotesNest.utils.DBSeedUtil;
 import com.example.NotesNest.utils.DrawerHelper;
 import com.example.NotesNest.utils.PermissionManager;
+import com.example.NotesNest.utils.constants.PrefKeys;
 
 import java.util.Random;
 
@@ -59,10 +64,59 @@ public class MainActivity extends AppCompatActivity {
     @SuppressLint("MissingInflatedId")
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        // 1. Install Android 12+ Core Splash Screen API before super.onCreate()
+        SplashScreen splashScreen = SplashScreen.installSplashScreen(this);
+
         EdgeToEdge.enable(this);
         applyTheme();
         super.onCreate(savedInstanceState);
+
+        AppPreferences prefs = AppPreferences.getInstance();
+
+        // 2. Check Onboarding and Login Routing
+        boolean isOnboardingCompleted = prefs.getBoolean(PrefKeys.IS_ONBOARDING_COMPLETED, false);
+        if (!isOnboardingCompleted) {
+            startActivity(new Intent(this, OnboardingActivity.class));
+            finish();
+            return;
+        }
+
+        if (!prefs.getLogin()) {
+            startActivity(new Intent(this, LoginActivity.class));
+            finish();
+            return;
+        }
+
+        // 3. Keep splash screen visible while performing background initialization
+        final boolean[] isInitialized = {false};
+        splashScreen.setKeepOnScreenCondition(() -> !isInitialized[0]);
+
+        // Smooth exit animation polish for Android 12+ (fading out entire splash window so icon and branding vanish together)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            splashScreen.setOnExitAnimationListener(splashScreenView -> {
+                final View rootView = splashScreenView.getView();
+
+                rootView.animate()
+                        .alpha(0f)
+                        .scaleX(1.05f)
+                        .scaleY(1.05f)
+                        .setDuration(350L)
+                        .setInterpolator(new FastOutSlowInInterpolator())
+                        .withEndAction(splashScreenView::remove)
+                        .start();
+            });
+        }
+
         setContentView(R.layout.activity_main);
+
+        // Background initialization work
+        new Thread(() -> {
+            String userId = prefs.getUserId();
+            if (userId != null && !userId.isEmpty()) {
+                DBSeedUtil.seedDefaultCategories(this, userId);
+            }
+            isInitialized[0] = true;
+        }).start();
 
         // Register receiver early to catch status updates from BillingManager sync
         LocalBroadcastManager.getInstance(this).registerReceiver(
@@ -94,9 +148,6 @@ public class MainActivity extends AppCompatActivity {
         com.example.NotesNest.utils.BillingManager.getInstance(this).syncPurchases();
 
         initGreeting();
-
-        LocalBroadcastManager.getInstance(this).registerReceiver(
-                premiumReceiver, new IntentFilter(AppPreferences.ACTION_PREMIUM_UPDATED));
     }
 
     private void initGreeting() {

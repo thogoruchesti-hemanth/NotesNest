@@ -231,5 +231,17 @@
     <string name="text_15_min">+15 min</string>
     <string name="text_snooze_icon">Snooze Icon</string>
     <string name="text_completion_icon">Completion Icon</string>
+
+
+    <!-- Onboarding Screen -->
+    <string name="onboarding_title_1">Capture Everything in One Place</string>
+    <string name="onboarding_desc_1">Jot down notes, save quick thoughts, and keep your ideas neatly organized with a clean, distraction-free editor.</string>
+
+    <string name="onboarding_title_2">Smart Reminders for Tasks &amp; Events</string>
+    <string name="onboarding_desc_2">Never miss a task, birthday, or important event. Set smart reminders and get timely notifications right when you need them.</string>
+
+    <string name="onboarding_title_3">Fast, Private, and Always Available</string>
+    <string name="onboarding_desc_3">Your notes stay 100% on your device. Lightning-fast, fully offline, and completely private—no internet required.</string>
+
     <string name="date_time_format">%1$s, %2$s</string>
 </resources>

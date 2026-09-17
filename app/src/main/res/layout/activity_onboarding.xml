@@ -5,6 +5,7 @@
     android:id="@+id/onBoardingActivity"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:background="?attr/android:colorBackground"
     tools:context=".activity.OnboardingActivity">
 
     <TextView
@@ -17,8 +18,9 @@
         android:clickable="true"
         android:focusable="true"
         android:padding="@dimen/padding_8"
+        android:stateListAnimator="@animator/scale_on_press"
         android:text="@string/text_skip"
-        android:textColor="@color/tabSelectedTextColorLight"
+        android:textColor="?attr/colorPrimary"
         android:textSize="@dimen/text_16"
         android:textStyle="bold"
         app:layout_constraintEnd_toEndOf="parent"
@@ -36,12 +38,36 @@
     <LinearLayout
         android:id="@+id/layoutIndicators"
         android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginBottom="@dimen/size_32"
+        android:layout_height="24dp"
+        android:layout_marginBottom="@dimen/size_24"
+        android:gravity="center"
         android:orientation="horizontal"
         app:layout_constraintBottom_toTopOf="@+id/btnNext"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent" />
+        app:layout_constraintStart_toStartOf="parent">
+
+        <View
+            android:id="@+id/dot1"
+            android:layout_width="24dp"
+            android:layout_height="8dp"
+            android:layout_marginHorizontal="4dp"
+            android:background="@drawable/dot_selected" />
+
+        <View
+            android:id="@+id/dot2"
+            android:layout_width="8dp"
+            android:layout_height="8dp"
+            android:layout_marginHorizontal="4dp"
+            android:background="@drawable/dot_unselected" />
+
+        <View
+            android:id="@+id/dot3"
+            android:layout_width="8dp"
+            android:layout_height="8dp"
+            android:layout_marginHorizontal="4dp"
+            android:background="@drawable/dot_unselected" />
+
+    </LinearLayout>
 
     <Button
         android:id="@+id/btnNext"
@@ -49,9 +75,10 @@
         android:layout_height="wrap_content"
         android:layout_marginHorizontal="@dimen/size_24"
         android:layout_marginBottom="@dimen/size_40"
-        android:backgroundTint="@color/tabSelectedTextColorLight"
+        android:backgroundTint="?attr/colorPrimary"
+        android:stateListAnimator="@animator/scale_on_press"
         android:text="@string/text_next"
-        android:textColor="@color/black"
+        android:textColor="?attr/colorOnPrimary"
         android:textStyle="bold"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"

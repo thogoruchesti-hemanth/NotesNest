@@ -14,12 +14,10 @@
     <style name="Theme.Notes" parent="Base.Theme.Notes" />
 
     <!-- Splash Screen Theme -->
-    <style name="Theme.App.Starting" parent="Theme.Material3.Dark.NoActionBar">
+    <style name="Theme.App.Starting" parent="Theme.SplashScreen">
         <item name="windowSplashScreenBackground">@color/black</item>
-        <item name="windowSplashScreenAnimatedIcon">@mipmap/ic_launcher</item>
+        <item name="windowSplashScreenAnimatedIcon">@drawable/ic_splash_logo_white</item>
+        <item name="android:windowSplashScreenBrandingImage" tools:targetApi="31">@drawable/ic_splash_branding_white</item>
         <item name="postSplashScreenTheme">@style/Theme.Notes</item>
-        <item name="android:windowBackground">@color/black</item>
-        <item name="windowActionBar">false</item>
-        <item name="windowNoTitle">true</item>
     </style>
 </resources>
