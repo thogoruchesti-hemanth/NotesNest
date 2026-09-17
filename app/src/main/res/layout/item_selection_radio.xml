@@ -6,5 +6,4 @@
     android:paddingHorizontal="4dp"
     android:textSize="16sp"
     android:textColor="?attr/colorOnSurface"
-    android:buttonTint="?attr/colorPrimary"
-    android:background="?attr/selectableItemBackground" />
+    android:buttonTint="?attr/colorPrimary" />
