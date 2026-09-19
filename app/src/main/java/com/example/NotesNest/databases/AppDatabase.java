@@ -114,6 +114,7 @@ public abstract class AppDatabase extends RoomDatabase {
                                     "notesnest.db"
                             )
                             .addMigrations(MIGRATION_5_6, MIGRATION_6_7)
+                            .fallbackToDestructiveMigration()
                             .fallbackToDestructiveMigrationOnDowngrade()
                             .build();
                 }

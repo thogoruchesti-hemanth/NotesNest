@@ -66,6 +66,9 @@
     <string name="text_reorder_categories_icon">reorder Categories icon</string>
     <string name="text_delete_category_icon">delete category icon</string>
     <string name="text_share_note_icon">Share note Icon</string>
+    <string name="text_share_note">Share Note</string>
+    <string name="text_share_as_image">Share as Image</string>
+    <string name="text_share_as_pdf">Share as Pdf</string>
     <string name="text_select_note">Select Note</string>
     <string name="text_back">back</string>
     <string name="text_create_a_note_first_then_come_back_here">Create a note first, then come back here</string>

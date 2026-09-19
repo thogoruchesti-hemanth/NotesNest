@@ -19,6 +19,7 @@ import android.text.style.ClickableSpan;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.HapticFeedbackConstants;
 import android.widget.Button;
 import android.widget.ImageButton;
 import android.widget.ImageView;
@@ -378,11 +379,36 @@ public class CommonDialogs {
         } catch (Exception ignored) {}
 
         btnShare.setOnClickListener(v -> {
-            Intent intent = new Intent(Intent.ACTION_SEND);
-            intent.setType("text/plain");
-            intent.putExtra(Intent.EXTRA_SUBJECT, note.title);
-            intent.putExtra(Intent.EXTRA_TEXT, note.title + "\n\n" + Html.fromHtml(note.content, Html.FROM_HTML_MODE_LEGACY));
-            context.startActivity(Intent.createChooser(intent, "Share via"));
+            v.performHapticFeedback(HapticFeedbackConstants.CONTEXT_CLICK);
+            BottomSheetDialog bottomSheetDialog = new BottomSheetDialog(context);
+            View sheetView = LayoutInflater.from(context).inflate(R.layout.share_bottom_sheet, null);
+            bottomSheetDialog.setContentView(sheetView);
+
+            NoteShareManager shareManager = new NoteShareManager(context);
+
+            sheetView.findViewById(R.id.share_text).setOnClickListener(stView -> {
+                stView.performHapticFeedback(HapticFeedbackConstants.CONTEXT_CLICK);
+                bottomSheetDialog.dismiss();
+                Intent intent = new Intent(Intent.ACTION_SEND);
+                intent.setType("text/plain");
+                intent.putExtra(Intent.EXTRA_SUBJECT, note.title);
+                intent.putExtra(Intent.EXTRA_TEXT, note.title + "\n\n" + Html.fromHtml(note.content, Html.FROM_HTML_MODE_LEGACY));
+                context.startActivity(Intent.createChooser(intent, "Share Note as Text"));
+            });
+
+            sheetView.findViewById(R.id.share_image).setOnClickListener(imView -> {
+                imView.performHapticFeedback(HapticFeedbackConstants.CONTEXT_CLICK);
+                bottomSheetDialog.dismiss();
+                shareManager.shareAsImage(note, card);
+            });
+
+            sheetView.findViewById(R.id.share_pdf).setOnClickListener(pdfView -> {
+                pdfView.performHapticFeedback(HapticFeedbackConstants.CONTEXT_CLICK);
+                bottomSheetDialog.dismiss();
+                shareManager.shareAsPdf(note, card);
+            });
+
+            bottomSheetDialog.show();
         });
 
         dialog.show();
