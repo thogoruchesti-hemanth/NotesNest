@@ -34,6 +34,7 @@ public final class PrefKeys {
     public static final String AUTO_BACKUP_ENABLED = "auto_backup_enabled";
     public static final String INCLUDE_ATTACHMENTS = "include_attachments";
     public static final String LAST_BACKUP_TIME = "last_backup_time";
+    public static final String DRIVE_BACKUP_PASSWORD = "drive_backup_password";
 
     // Edit Note Draft
     public static final String KEY_DRAFT_CONTENT = "draft_content";

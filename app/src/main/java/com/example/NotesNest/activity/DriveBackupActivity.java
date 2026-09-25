@@ -21,6 +21,7 @@ import androidx.activity.EdgeToEdge;
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.IntentSenderRequest;
 import androidx.activity.result.contract.ActivityResultContracts;
+import com.example.NotesNest.utils.CryptoUtils;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
@@ -211,6 +212,23 @@ public class DriveBackupActivity extends AppCompatActivity {
 
         binding.switchAutoBackup.setOnCheckedChangeListener((buttonView, isChecked) -> {
             if (!binding.switchAutoBackup.isEnabled()) return;
+            
+            if (isChecked) {
+                // Ensure we have a password saved for auto backup
+                String savedPassword = appPreferences.getString(PrefKeys.DRIVE_BACKUP_PASSWORD, null);
+                if (savedPassword == null) {
+                    binding.switchAutoBackup.setChecked(false); // revert until password is provided
+                    CommonDialogs.showPasswordDialog(this, "Set Cloud Backup Password", password -> {
+                        appPreferences.putString(PrefKeys.DRIVE_BACKUP_PASSWORD, CryptoUtils.encodePassword(password.toCharArray()));
+                        appPreferences.putBoolean(PrefKeys.AUTO_BACKUP_ENABLED, true);
+                        binding.switchAutoBackup.setChecked(true); // Now we can check it
+                        scheduleAutoBackup(true);
+                        AppToast.s(getString(R.string.text_auto_backup_enabled));
+                    });
+                    return;
+                }
+            }
+            
             appPreferences.putBoolean(PrefKeys.AUTO_BACKUP_ENABLED, isChecked);
             scheduleAutoBackup(isChecked);
             if (isSignedIn && isChecked) {
@@ -301,7 +319,15 @@ public class DriveBackupActivity extends AppCompatActivity {
                 return;
             }
             
-            runBackupNow();
+            String savedPassword = appPreferences.getString(PrefKeys.DRIVE_BACKUP_PASSWORD, null);
+            if (savedPassword == null) {
+                CommonDialogs.showPasswordDialog(this, "Set Cloud Backup Password", password -> {
+                    appPreferences.putString(PrefKeys.DRIVE_BACKUP_PASSWORD, CryptoUtils.encodePassword(password.toCharArray()));
+                    runBackupNow();
+                });
+            } else {
+                runBackupNow();
+            }
         });
 
         binding.btnRestoreNow.setOnClickListener(v -> {
@@ -323,7 +349,11 @@ public class DriveBackupActivity extends AppCompatActivity {
 
             CommonDialogs.showConfirmDialog(this, "Restore Data", 
                 "This will replace your current notes with the data from Google Drive. Are you sure?", 
-                "Restore", "Cancel", this::runRestoreNow);
+                "Restore", "Cancel", () -> {
+                    CommonDialogs.showPasswordDialog(this, "Enter Cloud Backup Password", password -> {
+                        runRestoreNow(password.toCharArray());
+                    });
+                });
         });
 
         binding.btnDisconnect.setOnClickListener(v -> signOut());
@@ -537,7 +567,7 @@ public class DriveBackupActivity extends AppCompatActivity {
         AppToast.s("Backup failed. Please try again.");
     }
 
-    private void runRestoreNow() {
+    private void runRestoreNow(char[] password) {
         progressDialog = CommonDialogs.showProgressDialog(this, getString(R.string.text_restoring_from_drive));
         String email = appPreferences.getString(PrefKeys.BACKUP_ACCOUNT_EMAIL, null);
         
@@ -551,6 +581,7 @@ public class DriveBackupActivity extends AppCompatActivity {
                     runOnUiThread(() -> {
                         if (progressDialog != null) progressDialog.dismiss();
                         AppToast.s("No backup file found on Drive.");
+                        CryptoUtils.clearPassword(password);
                     });
                     return;
                 }
@@ -564,7 +595,7 @@ public class DriveBackupActivity extends AppCompatActivity {
                 // 3. Use ImportManager logic to restore
                 runOnUiThread(() -> {
                     if (progressDialog != null) progressDialog.dismiss();
-                    performRestoreFromFile(tempFile, email);
+                    performRestoreFromFile(tempFile, password);
                 });
 
             } catch (Exception e) {
@@ -573,14 +604,14 @@ public class DriveBackupActivity extends AppCompatActivity {
                     if (progressDialog != null) progressDialog.dismiss();
                     AppToast.s("Restore failed: " + e.getMessage());
                 });
+                CryptoUtils.clearPassword(password);
             }
         });
     }
 
-    private void performRestoreFromFile(java.io.File file, String email) {
+    private void performRestoreFromFile(java.io.File file, char[] password) {
         ImportManager manager = new ImportManager(backgroundExecutor, new Handler(Looper.getMainLooper()));
-        // Use user's email as password since that's what we used in DriveBackupWorker
-        manager.importFromUri(this, android.net.Uri.fromFile(file), email.toCharArray(), new ImportManager.ImportCallback() {
+        manager.importFromUri(this, android.net.Uri.fromFile(file), password, new ImportManager.ImportCallback() {
             @Override
             public void showProgress(String message) {
                 progressDialog = CommonDialogs.showProgressDialog(DriveBackupActivity.this, getString(R.string.text_importing_data));
@@ -644,6 +675,7 @@ public class DriveBackupActivity extends AppCompatActivity {
                             appPreferences.remove(PrefKeys.BACKUP_USER_NAME);
                             appPreferences.remove(PrefKeys.BACKUP_USER_IMAGE);
                             appPreferences.remove(PrefKeys.IS_SIGNED_IN);
+                            appPreferences.remove(PrefKeys.DRIVE_BACKUP_PASSWORD);
                             
                             // Cancel any scheduled auto backup
                             WorkManager.getInstance(DriveBackupActivity.this).cancelUniqueWork(UNIQUE_WORK_NAME);

@@ -41,6 +41,9 @@ public interface ReminderDao {
 
     @Query("SELECT * FROM reminders")
     List<ReminderEntity> getAllRemindersForBackup();
+    
+    @Query("SELECT * FROM reminders WHERE id = :reminderId LIMIT 1")
+    ReminderEntity getReminderByIdSync(String reminderId);
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     void insertAll(List<ReminderEntity> reminders);

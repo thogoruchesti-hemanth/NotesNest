@@ -64,6 +64,9 @@ public interface CategoryDao {
 
     @Query("SELECT * FROM categories")
     List<CategoryEntity> getAllCategoriesForBackup();
+    
+    @Query("SELECT * FROM categories WHERE id = :categoryId LIMIT 1")
+    CategoryEntity getCategoryByIdSync(String categoryId);
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     void insertAllReplace(List<CategoryEntity> categories);

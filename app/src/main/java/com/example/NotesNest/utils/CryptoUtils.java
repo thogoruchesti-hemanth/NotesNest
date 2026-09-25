@@ -10,10 +10,12 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.nio.charset.StandardCharsets;
 import java.security.GeneralSecurityException;
 import java.security.SecureRandom;
 import java.security.spec.KeySpec;
 import java.util.Arrays;
+import android.util.Base64;
 
 import javax.crypto.Cipher;
 import javax.crypto.CipherInputStream;
@@ -84,7 +86,46 @@ public final class CryptoUtils {
         }
     }
 
-    // Decryption: read salt + iv header, then decrypt ciphertext
+    public static CipherOutputStream getCipherOutputStream(OutputStream out, char[] password) throws GeneralSecurityException, IOException {
+        byte[] salt = generateSalt();
+        byte[] iv = generateIv();
+        SecretKey key = deriveKey(password, salt);
+
+        out.write(salt);
+        out.write(iv);
+
+        Cipher cipher = Cipher.getInstance(CIPHER_ALGO);
+        GCMParameterSpec spec = new GCMParameterSpec(128, iv);
+        cipher.init(Cipher.ENCRYPT_MODE, key, spec);
+
+        return new CipherOutputStream(out, cipher);
+    }
+    
+    public static CipherInputStream getCipherInputStream(InputStream in, char[] password) throws GeneralSecurityException, IOException {
+        byte[] salt = new byte[SALT_LENGTH];
+        byte[] iv = new byte[IV_LENGTH];
+
+        int read = 0;
+        while (read < SALT_LENGTH) {
+            int r = in.read(salt, read, SALT_LENGTH - read);
+            if (r == -1) throw new IOException("Unexpected EOF while reading salt");
+            read += r;
+        }
+        read = 0;
+        while (read < IV_LENGTH) {
+            int r = in.read(iv, read, IV_LENGTH - read);
+            if (r == -1) throw new IOException("Unexpected EOF while reading iv");
+            read += r;
+        }
+
+        SecretKey key = deriveKey(password, salt);
+
+        Cipher cipher = Cipher.getInstance(CIPHER_ALGO);
+        GCMParameterSpec spec = new GCMParameterSpec(128, iv);
+        cipher.init(Cipher.DECRYPT_MODE, key, spec);
+
+        return new CipherInputStream(in, cipher);
+    }
     public static void decryptStream(InputStream encryptedIn, OutputStream plainOut, char[] password) throws GeneralSecurityException, IOException {
         byte[] salt = new byte[SALT_LENGTH];
         byte[] iv = new byte[IV_LENGTH];
@@ -123,6 +164,18 @@ public final class CryptoUtils {
     public static void clearPassword(char[] password) {
         if (password == null) return;
         Arrays.fill(password, '\0');
+    }
+
+    public static String encodePassword(char[] password) {
+        if (password == null) return null;
+        byte[] bytes = new String(password).getBytes(StandardCharsets.UTF_8);
+        return Base64.encodeToString(bytes, Base64.DEFAULT);
+    }
+
+    public static char[] decodePassword(String encodedPassword) {
+        if (encodedPassword == null) return null;
+        byte[] bytes = Base64.decode(encodedPassword, Base64.DEFAULT);
+        return new String(bytes, StandardCharsets.UTF_8).toCharArray();
     }
 
     public static void encryptBytesToUri(Context context, byte[] data, Uri destUri, char[] password) throws GeneralSecurityException, IOException {
