@@ -3,7 +3,7 @@ package com.example.NotesNest.backups;
 import android.content.Context;
 import android.net.Uri;
 import com.example.NotesNest.utils.CryptoUtils;
-import java.nio.charset.StandardCharsets;
+import java.io.OutputStream;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -24,12 +24,14 @@ public class LocalBackupManager {
 
         executor.execute(() -> {
             try {
-                // 1) Export data to JSON
-                String json = backupProcessor.exportToJson();
-                byte[] jsonBytes = json.getBytes(StandardCharsets.UTF_8);
-
-                // 2) Encrypt JSON bytes directly to the URI
-                CryptoUtils.encryptBytesToUri(context, jsonBytes, targetUri, password);
+                // Stream data directly to CipherOutputStream wrapping the destination URI
+                try (OutputStream out = context.getContentResolver().openOutputStream(targetUri)) {
+                    if (out == null) throw new java.io.IOException("Unable to open destination URI");
+                    
+                    try (OutputStream cipherOut = CryptoUtils.getCipherOutputStream(out, password)) {
+                        backupProcessor.exportToStream(cipherOut);
+                    }
+                }
 
                 callback.postToast("Backup saved successfully!");
             } catch (Exception e) {

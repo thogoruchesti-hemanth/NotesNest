@@ -24,6 +24,7 @@ import com.google.api.services.drive.model.FileList;
 
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
 import java.text.SimpleDateFormat;
 import java.util.Arrays;
@@ -208,20 +209,20 @@ public class DriveBackupWorker extends Worker {
             Context context = getApplicationContext();
             BackupProcessor backupProcessor = new BackupProcessor(context);
 
-            // 1. Export data to JSON
-            String json = backupProcessor.exportToJson();
-            byte[] jsonBytes = json.getBytes(StandardCharsets.UTF_8);
-
-            // 2. Encrypt JSON and save to temporary file
             java.io.File cacheDir = context.getCacheDir();
             java.io.File encryptedFile = new java.io.File(cacheDir, "drive_backup.enc");
 
-            char[] password = email.toCharArray();
+            String encodedPassword = AppPreferences.getInstance().getString(PrefKeys.DRIVE_BACKUP_PASSWORD, null);
+            if (encodedPassword == null) {
+                throw new IllegalStateException("Cloud backup password is not set");
+            }
+            char[] password = CryptoUtils.decodePassword(encodedPassword);
             
-            // We use a temporary ByteArrayInputStream to encrypt to file
-            try (java.io.InputStream in = new java.io.ByteArrayInputStream(jsonBytes);
-                 FileOutputStream fos = new FileOutputStream(encryptedFile)) {
-                CryptoUtils.encryptStream(in, fos, password);
+            try (FileOutputStream fos = new FileOutputStream(encryptedFile);
+                 java.io.OutputStream cipherOut = CryptoUtils.getCipherOutputStream(fos, password)) {
+                backupProcessor.exportToStream(cipherOut);
+            } finally {
+                CryptoUtils.clearPassword(password);
             }
 
             return encryptedFile;
