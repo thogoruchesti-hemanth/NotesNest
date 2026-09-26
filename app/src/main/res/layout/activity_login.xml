@@ -9,8 +9,10 @@
     android:scrollbarStyle="outsideOverlay">
 
     <LinearLayout
+        android:id="@+id/main_linear_layout"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:animateLayoutChanges="true"
         android:gravity="center"
         android:orientation="vertical"
         android:padding="@dimen/padding_16"
@@ -112,6 +114,7 @@
                 android:layout_height="wrap_content"
                 android:hint="@string/text_user_name"
                 android:inputType="text"
+                android:imeOptions="actionNext"
                 android:textColor="?attr/colorPrimary"
                 android:textSize="@dimen/text_18" />
         </com.google.android.material.textfield.TextInputLayout>
@@ -131,6 +134,7 @@
                 android:layout_height="wrap_content"
                 android:hint="@string/text_email"
                 android:inputType="textEmailAddress"
+                android:imeOptions="actionNext"
                 android:textColor="?attr/colorPrimary"
                 android:textSize="@dimen/text_18" />
         </com.google.android.material.textfield.TextInputLayout>
@@ -151,6 +155,7 @@
                 android:layout_height="wrap_content"
                 android:hint="@string/text_password"
                 android:inputType="textPassword"
+                android:imeOptions="actionNext"
                 android:textColor="?attr/colorPrimary"
                 android:textSize="@dimen/text_18" />
         </com.google.android.material.textfield.TextInputLayout>
@@ -184,6 +189,7 @@
                 android:layout_height="wrap_content"
                 android:hint="@string/text_confirm_password"
                 android:inputType="textPassword"
+                android:imeOptions="actionDone"
                 android:textColor="?attr/colorPrimary"
                 android:textSize="@dimen/text_18" />
         </com.google.android.material.textfield.TextInputLayout>
@@ -236,28 +242,22 @@
                 app:iconTint="@null" />
         </com.example.NotesNest.AnimatedRunningBorderLayout>
 
-        <!-- Add this in login mode section (inside your login form) -->
         <LinearLayout
             android:id="@+id/termsLayout"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginHorizontal="@dimen/margin_10"
-            android:gravity="center_vertical"
+            android:layout_marginTop="@dimen/margin_10"
+            android:gravity="center"
             android:orientation="horizontal"
             android:visibility="visible">
 
-            <CheckBox
-                android:id="@+id/termsCheckbox"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content" />
-
             <TextView
                 android:id="@+id/termsTextView"
-                android:layout_width="0dp"
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginStart="@dimen/margin_4"
-                android:layout_weight="1"
-                android:text="@string/terms_agreement"
+                android:gravity="center"
+                android:text="@string/msg_by_continuing"
                 android:textColor="?attr/colorPrimary"
                 android:textSize="@dimen/text_12" />
 

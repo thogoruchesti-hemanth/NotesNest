@@ -241,4 +241,21 @@
     <string name="onboarding_desc_3">Your notes stay 100% on your device. Lightning-fast, fully offline, and completely private—no internet required.</string>
 
     <string name="date_time_format">%1$s, %2$s</string>
+
+    <!-- Login & Signup Errors / Messages -->
+    <string name="error_invalid_email">Invalid email</string>
+    <string name="error_empty_password">Enter your password</string>
+    <string name="error_invalid_username">Username must be 3–15 characters long and contain only letters, numbers, or underscores</string>
+    <string name="error_weak_password">Password must be 8+ chars, contain upper &amp; lower case letters, a number, and a symbol</string>
+    <string name="error_password_mismatch">Passwords do not match</string>
+    <string name="error_no_google_accounts">No Google accounts found. Please sign in to an account in device settings.</string>
+    <string name="error_google_sign_in_failed">Google Sign-In failed: %s</string>
+    <string name="error_google_sign_in_another_account">Sign-in error: Please try another Google account</string>
+    <string name="error_google_sign_in_generic">Sign-in failed. Please try again.</string>
+    <string name="error_unable_to_open_image">Unable to open image</string>
+    <string name="error_failed_to_load_image">Failed to load image</string>
+    <string name="error_reset_password_email">Please enter a valid email to reset your password</string>
+    <string name="msg_password_reset_sent">Password reset link sent</string>
+    <string name="msg_by_continuing">By continuing, you agree to our &lt;u&gt;Terms &amp; Conditions&lt;/u&gt; and &lt;u&gt;Privacy Policy&lt;/u&gt;.</string>
+
 </resources>
