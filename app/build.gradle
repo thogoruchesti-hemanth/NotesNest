@@ -1,5 +1,6 @@
 // Apply Android application plugin
 apply plugin: 'com.android.application'
+apply plugin: 'org.jetbrains.kotlin.android'
 
 // Load keystore properties for signing (release builds)
 def keystoreProperties = new Properties()
@@ -59,6 +60,10 @@ android {
         // Upgrade to Java 17 for better performance and modern API support
         sourceCompatibility JavaVersion.VERSION_17
         targetCompatibility JavaVersion.VERSION_17
+    }
+
+    kotlinOptions {
+        jvmTarget = '17'
     }
 
     packagingOptions {
@@ -123,6 +128,13 @@ dependencies {
     implementation libs.play.services.ads
     implementation libs.billingclient
     implementation libs.play.integrity
+
+    // Kotlin & Coroutines
+    implementation libs.kotlinx.coroutines.core
+    implementation libs.kotlinx.coroutines.android
+    implementation libs.kotlinx.coroutines.play.services
+    implementation libs.androidx.lifecycle.viewmodel.ktx
+    implementation libs.androidx.lifecycle.runtime.ktx
 
     testImplementation libs.junit
     androidTestImplementation libs.ext.junit
