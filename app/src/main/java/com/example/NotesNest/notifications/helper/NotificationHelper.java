@@ -192,4 +192,42 @@ public class NotificationHelper {
         int flags = PendingIntent.FLAG_UPDATE_CURRENT | (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S ? PendingIntent.FLAG_MUTABLE : 0);
         return PendingIntent.getBroadcast(context, requestCode, intent, flags);
     }
+
+    /**
+     * Dedicated Notification for Background Backups
+     */
+    @SuppressLint("MissingPermission")
+    public static void showBackupNotification(Context context, String title, String message, boolean isOngoing) {
+        NotificationManager nm = (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
+        if (nm == null) return;
+        
+        createChannels(context);
+
+        // Fixed ID so the backup notification updates in-place rather than stacking
+        int backupNotificationId = 9991;
+
+        NotificationCompat.Builder builder = new NotificationCompat.Builder(context, CHANNEL_ID_DEFAULT)
+                .setSmallIcon(R.drawable.ic_drive_backup)
+                .setContentTitle(title)
+                .setContentText(message)
+                .setPriority(NotificationCompat.PRIORITY_LOW) // Low priority so it doesn't pop over the screen
+                .setOngoing(isOngoing) // If true, user can't swipe it away
+                .setAutoCancel(!isOngoing); // Only auto-cancel if it's finished
+        
+        if (isOngoing) {
+            // Show indeterminate progress bar
+            builder.setProgress(0, 0, true);
+        } else {
+            // Remove progress bar when done
+            builder.setProgress(0, 0, false);
+        }
+
+        // We explicitly suppress the permission warning because Android 13+ requires POST_NOTIFICATIONS
+        // If the user denied it, nm.notify() simply fails silently, which is correct behavior.
+        try {
+            nm.notify(backupNotificationId, builder.build());
+        } catch (SecurityException e) {
+            // Permission denied by user, fail silently
+        }
+    }
 }
