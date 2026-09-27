@@ -21,6 +21,7 @@ import com.google.api.services.drive.Drive;
 import com.google.api.services.drive.DriveScopes;
 import com.google.api.services.drive.model.File;
 import com.google.api.services.drive.model.FileList;
+import com.example.NotesNest.notifications.helper.NotificationHelper;
 
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -58,6 +59,12 @@ public class DriveBackupWorker extends Worker {
 
         if (TextUtils.isEmpty(email) || "null".equalsIgnoreCase(email) || !isSignedIn) {
             Log.e(TAG, "Backup failed: User not signed in or invalid account. Email: " + email);
+            NotificationHelper.showBackupNotification(
+                    getApplicationContext(), 
+                    "Backup Failed", 
+                    "You are not signed in to Google Drive.", 
+                    false
+            );
             return Result.failure();
         }
 
@@ -90,16 +97,40 @@ public class DriveBackupWorker extends Worker {
 
             if (success) {
                 updateLastBackupTimestamp(appPrefs);
+                NotificationHelper.showBackupNotification(
+                        getApplicationContext(), 
+                        "Backup Complete", 
+                        "Your notes were successfully backed up to Google Drive.", 
+                        false
+                );
                 return Result.success();
             } else {
+                NotificationHelper.showBackupNotification(
+                        getApplicationContext(), 
+                        "Backup Failed", 
+                        "Could not upload backup to Google Drive.", 
+                        false
+                );
                 return Result.failure();
             }
 
         } catch (UserRecoverableAuthIOException e) {
             Log.e(TAG, "User action required for Drive access: " + e.getMessage());
+            NotificationHelper.showBackupNotification(
+                    getApplicationContext(), 
+                    "Backup Failed", 
+                    "Authentication required. Please sign in again.", 
+                    false
+            );
             return Result.failure();
         } catch (Exception e) {
             Log.e(TAG, "Worker Exception: " + e.getMessage(), e);
+            NotificationHelper.showBackupNotification(
+                    getApplicationContext(), 
+                    "Backup Error", 
+                    "An error occurred: " + e.getMessage(), 
+                    false
+            );
             return shouldRetry(e) ? Result.retry() : Result.failure();
         } finally {
             if (localBackupFile != null && localBackupFile.exists()) {
