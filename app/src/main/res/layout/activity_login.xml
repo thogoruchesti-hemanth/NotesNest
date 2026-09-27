@@ -49,15 +49,15 @@
                 android:layout_width="32dp"
                 android:layout_height="32dp"
                 android:layout_gravity="bottom|end"
-                android:layout_marginEnd="6dp"
-                android:layout_marginBottom="6dp"
+                android:layout_marginEnd="8dp"
+                android:layout_marginBottom="8dp"
                 android:clickable="true"
                 android:focusable="true"
                 android:contentDescription="@string/text_upload_image"
                 android:visibility="gone"
                 app:cardBackgroundColor="?attr/colorPrimary"
                 app:cardCornerRadius="16dp"
-                app:cardElevation="0dp"
+                app:cardElevation="@dimen/elevation_4"
                 app:strokeColor="?android:attr/colorBackground"
                 app:strokeWidth="3dp">
 
