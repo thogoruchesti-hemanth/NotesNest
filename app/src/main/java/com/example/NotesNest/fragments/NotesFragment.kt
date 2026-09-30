@@ -13,7 +13,6 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.view.inputmethod.InputMethodManager
-import android.widget.Button
 import android.widget.EditText
 import android.widget.ImageButton
 import android.widget.TextView
@@ -65,7 +64,6 @@ class NotesFragment : Fragment(), ThemeManager.ThemeChangeListener {
     private lateinit var searchEditText: EditText
     private lateinit var clearSearchBtn: ImageButton
     private lateinit var tabLayout: TabLayout
-    private lateinit var titleTextView: TextView
     private lateinit var emptyStateLayout: View
     private var adView: AdView? = null
 
@@ -126,7 +124,6 @@ class NotesFragment : Fragment(), ThemeManager.ThemeChangeListener {
         val manageCategoryButton = view.findViewById<ImageButton>(R.id.btnManageCategory)
         val btnLayoutToggle = view.findViewById<ImageButton>(R.id.btnLayoutToggle)
         recyclerView = view.findViewById(R.id.recyclerView)
-        titleTextView = view.findViewById(R.id.tvTitle)
         searchEditText = view.findViewById(R.id.searchEditText)
         clearSearchBtn = view.findViewById(R.id.clearSearchBtn)
         adView = view.findViewById(R.id.adViewNotes)
@@ -428,7 +425,6 @@ class NotesFragment : Fragment(), ThemeManager.ThemeChangeListener {
                 val name = extractTabName(tab)
                 if (name != null) {
                     selectedCategory = name
-                    titleTextView.text = selectedCategory
                     updateSearchHint()
                     runSearch(searchEditText.text.toString().trim())
                 }
@@ -532,7 +528,6 @@ class NotesFragment : Fragment(), ThemeManager.ThemeChangeListener {
                 if (txt != null) selectedCategory = txt.text.toString()
             }
         }
-        titleTextView.text = selectedCategory
     }
 
     private fun runSearch(query: String?) {
@@ -601,9 +596,13 @@ class NotesFragment : Fragment(), ThemeManager.ThemeChangeListener {
             refreshLayout()
         }
         if (::adapter.isInitialized) {
+            val previousSize = adapter.itemCount
             adapter.updateData(notes, isCategoryChange)
             if (recyclerView.adapter != adapter) {
                 recyclerView.adapter = adapter
+            }
+            if (previousSize < notes.size && notes.isNotEmpty()) {
+                recyclerView.scrollToPosition(0)
             }
         }
         if (notes.isEmpty()) {

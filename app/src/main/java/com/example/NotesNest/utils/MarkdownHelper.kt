@@ -32,11 +32,14 @@ object MarkdownHelper {
             return
         }
 
-        val rawText = if (isHtmlContent(content)) {
+        var rawText = if (isHtmlContent(content)) {
             convertHtmlToMarkdown(content)
         } else {
             content
         }
+
+        // Convert single newlines to Markdown hard line breaks ("  \n") so each typed line appears on its own line
+        rawText = rawText.replace(Regex("(?<!\n)\n(?!\n)"), "  \n")
 
         getMarkwon(textView.context).setMarkdown(textView, rawText)
     }
@@ -97,5 +100,84 @@ object MarkdownHelper {
             .replace("&quot;", "\"")
 
         return text.trim()
+    }
+
+    /**
+     * Toggles a checklist item at lineIndex if present. Returns updated markdown string, or null if line is not a checklist item.
+     */
+    @JvmStatic
+    fun toggleChecklistItemAtLine(content: String?, lineIndex: Int): String? {
+        if (content.isNullOrEmpty() || lineIndex < 0) return null
+        val rawText = if (isHtmlContent(content)) convertHtmlToMarkdown(content) else content
+        val lines = rawText.split("\n").toMutableList()
+        if (lineIndex >= lines.size) return null
+
+        val line = lines[lineIndex]
+        val trimmed = line.trimStart()
+        val leading = line.takeWhile { it == ' ' || it == '\t' }
+
+        val updatedLine = when {
+            trimmed.startsWith("- [ ] ") -> leading + "- [x] " + trimmed.substring(6)
+            trimmed.startsWith("- [x] ") || trimmed.startsWith("- [X] ") -> leading + "- [ ] " + trimmed.substring(6)
+            trimmed.startsWith("* [ ] ") -> leading + "* [x] " + trimmed.substring(6)
+            trimmed.startsWith("* [x] ") || trimmed.startsWith("* [X] ") -> leading + "* [ ] " + trimmed.substring(6)
+            trimmed.startsWith("[ ] ") -> leading + "[x] " + trimmed.substring(4)
+            trimmed.startsWith("[x] ") || trimmed.startsWith("[X] ") -> leading + "[ ] " + trimmed.substring(4)
+            else -> null
+        }
+
+        if (updatedLine != null) {
+            lines[lineIndex] = updatedLine
+            return lines.joinToString("\n")
+        }
+        return null
+    }
+
+    /**
+     * Converts Markdown content into a rich Spanned CharSequence for Android RemoteViews / Widgets.
+     */
+    @JvmStatic
+    fun renderMarkdownForWidget(markdown: String?): CharSequence {
+        if (markdown.isNullOrEmpty()) {
+            return ""
+        }
+
+        var html = if (isHtmlContent(markdown)) {
+            convertHtmlToMarkdown(markdown)
+        } else {
+            markdown
+        }
+
+        // Convert H2 headings: "## Heading" -> "<big><b>Heading</b></big>"
+        html = html.replace(Regex("(?m)^##\\s+(.*)$"), "<big><b>$1</b></big><br/>")
+
+        // Convert H1 headings: "# Heading" -> "<big><big><b>Heading</b></big></big>"
+        html = html.replace(Regex("(?m)^#\\s+(.*)$"), "<big><big><b>$1</b></big></big><br/>")
+
+        // Convert Bold + Italic: "***text***" -> "<b><i>text</i></b>"
+        html = html.replace(Regex("\\*\\*\\*(.*?)\\*\\*\\*"), "<b><i>$1</i></b>")
+
+        // Convert Bold: "**text**" -> "<b>text</b>"
+        html = html.replace(Regex("\\*\\*(.*?)\\*\\*"), "<b>$1</b>")
+
+        // Convert Italic: "*text*" -> "<i>text</i>"
+        html = html.replace(Regex("\\*(.*?)\\*"), "<i>$1</i>")
+
+        // Convert Checkboxes: "- [x]" / "- [X]" -> "☑ ", "- [ ]" -> "☐ "
+        html = html.replace(Regex("(?m)^-\\s*\\[[xX]\\]\\s*"), "☑ ")
+        html = html.replace(Regex("(?m)^-\\s*\\[\\s*\\]\\s*"), "☐ ")
+
+        // Convert List items: "- " or "* " -> "• "
+        html = html.replace(Regex("(?m)^[\\-\\*]\\s+"), "• ")
+
+        // Convert single newlines to <br/>
+        html = html.replace("\n", "<br/>")
+
+        return if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.N) {
+            android.text.Html.fromHtml(html, android.text.Html.FROM_HTML_MODE_LEGACY)
+        } else {
+            @Suppress("DEPRECATION")
+            android.text.Html.fromHtml(html)
+        }
     }
 }

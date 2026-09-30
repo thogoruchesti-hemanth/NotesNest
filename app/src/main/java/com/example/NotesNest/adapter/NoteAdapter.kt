@@ -85,9 +85,58 @@ class NoteAdapter(
                 isSynced = note.isSynced
                 isDeleted = note.isDeleted
                 isPinned = !note.isPinned
-                updatedAt = System.currentTimeMillis()
+                updatedAt = note.updatedAt
             }
             noteViewModel.updateNote(updatedNote)
+        }
+
+        // Touch & Gesture listener on Note Message TextView for Checklists and Long-Press Delegation
+        val gestureDetector = android.view.GestureDetector(context, object : android.view.GestureDetector.SimpleOnGestureListener() {
+            override fun onSingleTapUp(e: android.view.MotionEvent): Boolean {
+                val currentPos = holder.bindingAdapterPosition
+                if (currentPos != RecyclerView.NO_POSITION) {
+                    val currentNote = noteList[currentPos]
+                    val textView = holder.textViewContent
+                    val layout = textView.layout
+                    if (layout != null) {
+                        val y = e.y - textView.totalPaddingTop + textView.scrollY
+                        val line = layout.getLineForVertical(y.toInt())
+                        val updatedContent = com.example.NotesNest.utils.MarkdownHelper.toggleChecklistItemAtLine(currentNote.content, line)
+                        if (updatedContent != null) {
+                            val updatedNote = NoteEntity().apply {
+                                id = currentNote.id
+                                userId = currentNote.userId
+                                categoryId = currentNote.categoryId
+                                title = currentNote.title
+                                content = updatedContent
+                                colorHex = currentNote.colorHex
+                                createdAt = currentNote.createdAt
+                                isSynced = currentNote.isSynced
+                                isDeleted = currentNote.isDeleted
+                                isPinned = currentNote.isPinned
+                                updatedAt = System.currentTimeMillis()
+                            }
+                            noteViewModel.updateNote(updatedNote)
+                            return true
+                        }
+                    }
+                }
+                holder.mainLayout.performClick()
+                return true
+            }
+
+            override fun onLongPress(e: android.view.MotionEvent) {
+                holder.mainLayout.performLongClick()
+            }
+        })
+
+        holder.textViewContent.setOnTouchListener { v, event ->
+            v.performClick()
+            gestureDetector.onTouchEvent(event)
+        }
+
+        holder.textViewContent.setOnLongClickListener {
+            holder.mainLayout.performLongClick()
         }
 
         // On Click -> Show Full Note Dialog
@@ -135,7 +184,7 @@ class NoteAdapter(
                     }
 
                     override fun onDelete(n: NoteEntity, pos: Int) {
-                        deleteNote(n, pos)
+                        deleteNote(n)
                     }
 
                     override fun onPin(n: NoteEntity) {
@@ -150,7 +199,7 @@ class NoteAdapter(
                             isSynced = n.isSynced
                             isDeleted = n.isDeleted
                             isPinned = !n.isPinned
-                            updatedAt = System.currentTimeMillis()
+                            updatedAt = n.updatedAt
                         }
                         noteViewModel.updateNote(updatedNote)
                     }
@@ -184,11 +233,8 @@ class NoteAdapter(
         }
     }
 
-    private fun deleteNote(note: NoteEntity, position: Int) {
+    private fun deleteNote(note: NoteEntity) {
         noteViewModel.deleteNote(note)
-        (context as? Activity)?.runOnUiThread {
-            notifyItemRemoved(position)
-        }
     }
 
     override fun getItemCount(): Int = noteList.size
@@ -196,7 +242,8 @@ class NoteAdapter(
     fun updateData(newNotes: List<NoteEntity>?, isCategoryChange: Boolean = false) {
         if (newNotes == null) return
 
-        if (isCategoryChange) {
+        val sizeChanged = noteList.size != newNotes.size
+        if (isCategoryChange || sizeChanged) {
             noteList.clear()
             noteList.addAll(newNotes)
             notifyDataSetChanged()

@@ -36,35 +36,6 @@
     </LinearLayout>
 
     <LinearLayout
-        android:id="@+id/btnPin"
-        android:layout_width="65dp"
-        android:layout_height="65dp"
-        android:layout_margin="4dp"
-        android:background="@drawable/bg_glass_circle"
-        android:clickable="true"
-        android:focusable="true"
-        android:gravity="center"
-        android:orientation="vertical">
-
-        <ImageView
-            android:id="@+id/ivPinIcon"
-            android:layout_width="28dp"
-            android:layout_height="28dp"
-            android:src="@drawable/ic_pinned"
-            android:contentDescription="@string/text_pinned_icon"
-            app:tint="@color/black" />
-
-        <TextView
-            android:id="@+id/tvPinText"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="@string/text_pin"
-            android:textColor="@color/black"
-            android:textSize="11sp"
-            android:textStyle="bold" />
-    </LinearLayout>
-
-    <LinearLayout
         android:id="@+id/btnDelete"
         android:layout_width="65dp"
         android:layout_height="65dp"

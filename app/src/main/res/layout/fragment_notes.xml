@@ -4,159 +4,144 @@
     xmlns:ads="http://schemas.android.com/apk/res-auto"
     android:id="@+id/notes_fragment"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:clipChildren="false"
-    android:clipToPadding="false">
+    android:layout_height="match_parent">
 
     <LinearLayout
-        android:id="@+id/topHeaderContainer"
+        android:id="@+id/appHeaderLayout"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:clipChildren="false"
-        android:clipToPadding="false"
-        android:gravity="center_vertical"
-        android:orientation="horizontal"
-        android:paddingHorizontal="@dimen/padding_16"
-        android:paddingTop="@dimen/padding_8"
-        android:paddingBottom="@dimen/padding_4"
+        android:background="?attr/colorSecondary"
+        android:orientation="vertical"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent">
 
-        <androidx.cardview.widget.CardView
-            android:id="@+id/searchLayout"
-            android:layout_width="0dp"
+        <LinearLayout
+            android:id="@+id/topHeaderContainer"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_weight="1"
-            app:cardCornerRadius="12dp"
-            app:cardElevation="3dp"
-            app:cardUseCompatPadding="true">
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
+            android:paddingHorizontal="@dimen/padding_16"
+            android:paddingTop="@dimen/padding_8"
+            android:paddingBottom="@dimen/padding_4">
 
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="@dimen/size_48"
-                android:background="@android:color/white"
-                android:gravity="center_vertical"
-                android:orientation="horizontal"
-                android:paddingHorizontal="@dimen/padding_8">
-
-                <ImageView
-                    android:id="@+id/searchIcon"
-                    android:layout_width="@dimen/size_20"
-                    android:layout_height="@dimen/size_20"
-                    android:layout_marginStart="@dimen/margin_8"
-                    android:contentDescription="@string/text_search_icon"
-                    android:src="@drawable/ic_search"
-                    app:tint="@color/grey_400" />
-
-                <EditText
-                    android:id="@+id/searchEditText"
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_marginStart="@dimen/margin_8"
-                    android:layout_weight="1"
-                    android:background="@android:color/transparent"
-                    android:cursorVisible="true"
-                    android:hint="@string/text_search_your_notes"
-                    android:imeOptions="actionSearch"
-                    android:importantForAutofill="no"
-                    android:inputType="text"
-                    android:maxLines="1"
-                    android:textColor="@color/black"
-                    android:textColorHint="@color/grey_400"
-                    android:textCursorDrawable="@drawable/search_cursor"
-                    android:textSize="15sp" />
-
-                <ImageButton
-                    android:id="@+id/clearSearchBtn"
-                    android:layout_width="@dimen/size_20"
-                    android:layout_height="@dimen/size_20"
-                    android:layout_marginEnd="@dimen/margin_8"
-                    android:background="?attr/selectableItemBackgroundBorderless"
-                    android:contentDescription="@string/text_close"
-                    android:src="@drawable/ic_close"
-                    android:visibility="gone"
-                    app:tint="@color/grey_400" />
-            </LinearLayout>
-        </androidx.cardview.widget.CardView>
-
-        <ImageButton
-            android:id="@+id/btnLayoutToggle"
-            android:layout_width="@dimen/size_40"
-            android:layout_height="@dimen/size_40"
-            android:layout_marginStart="4dp"
-            android:background="?attr/selectableItemBackgroundBorderless"
-            android:contentDescription="@string/app_name"
-            android:padding="@dimen/padding_8"
-            android:src="@drawable/ic_grid_view"
-            app:tint="?attr/colorPrimary" />
-    </LinearLayout>
-
-    <androidx.appcompat.widget.LinearLayoutCompat
-        android:id="@+id/tabContainer"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:background="?attr/colorSecondary"
-        android:orientation="horizontal"
-        android:paddingVertical="@dimen/padding_6"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/topHeaderContainer">
-
-        <FrameLayout
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1">
-
-            <com.google.android.material.tabs.TabLayout
-                android:id="@+id/tabLayout"
-                android:layout_width="match_parent"
+            <androidx.cardview.widget.CardView
+                android:id="@+id/searchLayout"
+                android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:background="?attr/colorSecondary"
-                app:tabIndicatorColor="@color/tabSelectedTextColor"
-                app:tabIndicatorFullWidth="false"
-                app:tabIndicatorHeight="@dimen/size_3"
-                app:tabMode="scrollable"
-                app:tabPaddingStart="@dimen/padding_16"
-                app:tabPaddingEnd="@dimen/padding_16"
-                app:tabRippleColor="@android:color/transparent" />
+                android:layout_weight="1"
+                app:cardCornerRadius="12dp"
+                app:cardElevation="3dp"
+                app:cardUseCompatPadding="true">
 
-            <View
-                android:id="@+id/fadeOverlay"
-                android:layout_width="@dimen/size_48"
-                android:layout_height="@dimen/size_48"
-                android:layout_gravity="end"
-                android:background="@drawable/bg_gradient_fade_right" />
-        </FrameLayout>
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="@dimen/size_48"
+                    android:background="@android:color/white"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal"
+                    android:paddingHorizontal="@dimen/padding_8">
 
-        <ImageButton
-            android:id="@+id/btnManageCategory"
-            android:layout_width="@dimen/size_40"
-            android:layout_height="@dimen/size_40"
-            android:layout_gravity="center_vertical"
-            android:layout_marginEnd="@dimen/margin_16"
-            android:background="?attr/selectableItemBackgroundBorderless"
-            android:backgroundTint="@color/grey_400"
-            android:contentDescription="@string/text_add"
-            android:paddingHorizontal="@dimen/padding_12"
-            android:src="@drawable/ic_3dots" />
-    </androidx.appcompat.widget.LinearLayoutCompat>
+                    <ImageView
+                        android:id="@+id/searchIcon"
+                        android:layout_width="@dimen/size_20"
+                        android:layout_height="@dimen/size_20"
+                        android:layout_marginStart="@dimen/margin_8"
+                        android:contentDescription="@string/text_search_icon"
+                        android:src="@drawable/ic_search"
+                        app:tint="@color/grey_400" />
 
-    <TextView
-        android:id="@+id/tvTitle"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginHorizontal="@dimen/margin_16"
-        android:layout_marginVertical="@dimen/margin_10"
-        android:ellipsize="end"
-        android:maxLines="1"
-        android:singleLine="true"
-        android:textColor="?attr/colorPrimary"
-        android:textSize="@dimen/text_36"
-        android:textStyle="bold"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/tabContainer" />
+                    <EditText
+                        android:id="@+id/searchEditText"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="@dimen/margin_8"
+                        android:layout_weight="1"
+                        android:background="@android:color/transparent"
+                        android:cursorVisible="true"
+                        android:hint="@string/text_search_your_notes"
+                        android:imeOptions="actionSearch"
+                        android:importantForAutofill="no"
+                        android:inputType="text"
+                        android:maxLines="1"
+                        android:textColor="@color/black"
+                        android:textColorHint="@color/grey_400"
+                        android:textCursorDrawable="@drawable/search_cursor"
+                        android:textSize="15sp" />
+
+                    <ImageButton
+                        android:id="@+id/clearSearchBtn"
+                        android:layout_width="@dimen/size_20"
+                        android:layout_height="@dimen/size_20"
+                        android:layout_marginEnd="@dimen/margin_8"
+                        android:background="?attr/selectableItemBackgroundBorderless"
+                        android:contentDescription="@string/text_close"
+                        android:src="@drawable/ic_close"
+                        android:visibility="gone"
+                        app:tint="@color/grey_400" />
+                </LinearLayout>
+            </androidx.cardview.widget.CardView>
+
+            <ImageButton
+                android:id="@+id/btnLayoutToggle"
+                android:layout_width="@dimen/size_40"
+                android:layout_height="@dimen/size_40"
+                android:layout_marginStart="4dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:contentDescription="@string/app_name"
+                android:padding="@dimen/padding_8"
+                android:src="@drawable/ic_grid_view"
+                app:tint="?attr/colorPrimary" />
+        </LinearLayout>
+
+        <androidx.appcompat.widget.LinearLayoutCompat
+            android:id="@+id/tabContainer"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="?attr/colorSecondary"
+            android:orientation="horizontal"
+            android:paddingVertical="@dimen/padding_6">
+
+            <FrameLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1">
+
+                <com.google.android.material.tabs.TabLayout
+                    android:id="@+id/tabLayout"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:background="?attr/colorSecondary"
+                    app:tabIndicatorColor="@color/tabSelectedTextColor"
+                    app:tabIndicatorFullWidth="false"
+                    app:tabIndicatorHeight="@dimen/size_3"
+                    app:tabMode="scrollable"
+                    app:tabPaddingStart="@dimen/padding_16"
+                    app:tabPaddingEnd="@dimen/padding_16"
+                    app:tabRippleColor="@android:color/transparent" />
+
+                <View
+                    android:id="@+id/fadeOverlay"
+                    android:layout_width="@dimen/size_48"
+                    android:layout_height="@dimen/size_48"
+                    android:layout_gravity="end"
+                    android:background="@drawable/bg_gradient_fade_right" />
+            </FrameLayout>
+
+            <ImageButton
+                android:id="@+id/btnManageCategory"
+                android:layout_width="@dimen/size_40"
+                android:layout_height="@dimen/size_40"
+                android:layout_gravity="center_vertical"
+                android:layout_marginEnd="@dimen/margin_16"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:backgroundTint="@color/grey_400"
+                android:contentDescription="@string/text_add"
+                android:paddingHorizontal="@dimen/padding_12"
+                android:src="@drawable/ic_3dots" />
+        </androidx.appcompat.widget.LinearLayoutCompat>
+    </LinearLayout>
 
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/recyclerView"
@@ -164,11 +149,12 @@
         android:layout_height="0dp"
         android:clipToPadding="false"
         android:paddingHorizontal="12dp"
-        android:layout_marginBottom="@dimen/margin_10"
+        android:paddingTop="8dp"
+        android:paddingBottom="88dp"
         app:layout_constraintBottom_toTopOf="@id/adViewNotes"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/tvTitle" />
+        app:layout_constraintTop_toBottomOf="@id/appHeaderLayout" />
 
     <LinearLayout
         android:id="@+id/emptyStateLayout"
@@ -180,7 +166,7 @@
         app:layout_constraintBottom_toTopOf="@id/adViewNotes"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/tvTitle">
+        app:layout_constraintTop_toBottomOf="@id/appHeaderLayout">
 
         <ImageView
             android:layout_width="120dp"
@@ -220,6 +206,5 @@
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent" />
-
 
 </androidx.constraintlayout.widget.ConstraintLayout>

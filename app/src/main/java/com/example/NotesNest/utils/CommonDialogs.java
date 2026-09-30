@@ -369,6 +369,29 @@ public class CommonDialogs {
 
         MarkdownHelper.renderMarkdown(content, note.content);
 
+        content.setOnTouchListener((v, event) -> {
+            if (event.getAction() == android.view.MotionEvent.ACTION_UP) {
+                v.performClick();
+                TextView textView = (TextView) v;
+                android.text.Layout layout = textView.getLayout();
+                if (layout != null) {
+                    float y = event.getY() - textView.getTotalPaddingTop() + textView.getScrollY();
+                    int line = layout.getLineForVertical((int) y);
+                    String updatedContent = MarkdownHelper.toggleChecklistItemAtLine(note.content, line);
+                    if (updatedContent != null) {
+                        note.content = updatedContent;
+                        note.updatedAt = System.currentTimeMillis();
+                        MarkdownHelper.renderMarkdown(content, note.content);
+                        if (callback instanceof NoteActionCallback) {
+                            ((NoteActionCallback) callback).onNoteUpdated(note);
+                        }
+                        return true;
+                    }
+                }
+            }
+            return false;
+        });
+
         callback.setDateTime(note.createdAt, date, time);
         callback.setCategory(category, note.categoryId);
 
@@ -413,6 +436,11 @@ public class CommonDialogs {
         });
 
         dialog.show();
+        if (dialog.getWindow() != null) {
+            android.util.DisplayMetrics metrics = context.getResources().getDisplayMetrics();
+            int width = (int) (metrics.widthPixels * 0.88);
+            dialog.getWindow().setLayout(width, ViewGroup.LayoutParams.WRAP_CONTENT);
+        }
     }
 
     private static void setupResponsiveCheckboxes(Context context, TextView tv, NoteEntity note, NoteDialogCallback callback) {
@@ -522,33 +550,20 @@ public class CommonDialogs {
             popupWindow.dismiss();
         });
 
-        LinearLayout btnPin = view.findViewById(R.id.btnPin);
-        TextView tvPinText = view.findViewById(R.id.tvPinText);
-        ImageView ivPinIcon = view.findViewById(R.id.ivPinIcon);
-
-        if (note.isPinned) {
-            tvPinText.setText(R.string.text_unpin);
-            ivPinIcon.setImageResource(R.drawable.ic_unpinned);
-        } else {
-            tvPinText.setText(R.string.text_pin);
-            ivPinIcon.setImageResource(R.drawable.ic_pinned);
-        }
-
-        btnPin.setOnClickListener(v -> {
-            listener.onPin(note);
-            popupWindow.dismiss();
-        });
-
         view.findViewById(R.id.btnDelete).setOnClickListener(v -> {
             listener.onDelete(note, pos);
             popupWindow.dismiss();
         });
 
         view.measure(View.MeasureSpec.UNSPECIFIED, View.MeasureSpec.UNSPECIFIED);
-        int xOffset = (anchorView.getWidth() - view.getMeasuredWidth()) / 2;
-        int yOffset = -(anchorView.getHeight() + view.getMeasuredHeight()) / 2;
 
-        popupWindow.showAsDropDown(anchorView, xOffset, yOffset);
+        int[] location = new int[2];
+        anchorView.getLocationOnScreen(location);
+
+        int centerX = location[0] + (anchorView.getWidth() - view.getMeasuredWidth()) / 2;
+        int centerY = location[1] + (anchorView.getHeight() - view.getMeasuredHeight()) / 2;
+
+        popupWindow.showAtLocation(anchorView, android.view.Gravity.NO_GRAVITY, centerX, centerY);
     }
 
     public static void showCustomDialog(Context context, ReminderEntity reminder, String posBtn, String negBtn, Runnable onEdit, Runnable onDelete) {

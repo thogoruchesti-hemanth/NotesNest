@@ -96,19 +96,19 @@ public class NoteWidgetUpdateService extends Worker {
         NoteEntity note = getNoteForWidget(context, widgetId);
 
         if (note != null) {
-            String content =
-                    HtmlListConverter.convertHtmlLists(note.content);
-
             String dateText = new SimpleDateFormat(
                     "MMM dd", Locale.getDefault()
             ).format(new Date(note.createdAt));
 
             views.setTextViewText(R.id.tvTitle, note.title);
-            views.setTextViewText(
-                    R.id.tvMessage,
-                    Html.fromHtml(content, Html.FROM_HTML_MODE_LEGACY)
-            );
             views.setTextViewText(R.id.tvTime, dateText);
+
+            // Bind RemoteViewsService for scrollable ListView
+            Intent serviceIntent = new Intent(context, NoteWidgetService.class);
+            serviceIntent.putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, widgetId);
+            serviceIntent.setData(android.net.Uri.parse(serviceIntent.toUri(Intent.URI_INTENT_SCHEME)));
+            views.setRemoteAdapter(R.id.widget_list, serviceIntent);
+            appWidgetManager.notifyAppWidgetViewDataChanged(widgetId, R.id.widget_list);
 
             applyColors(views, note.colorHex);
 

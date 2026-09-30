@@ -3,11 +3,14 @@ package com.example.NotesNest.utils
 import android.text.Editable
 import android.text.SpannableStringBuilder
 import android.text.TextWatcher
+import android.util.Log
 import android.widget.EditText
 
 class UndoRedoHelper(private val editText: EditText) {
 
     private var isUndoOrRedo = false
+    val isUndoOrRedoState: Boolean
+        get() = isUndoOrRedo
     private val editHistory = EditHistory()
     private val changeListener = EditTextChangeListener()
     private var historyChangeListener: ((Boolean, Boolean) -> Unit)? = null
@@ -28,31 +31,55 @@ class UndoRedoHelper(private val editText: EditText) {
     fun undo() {
         val edit = editHistory.getPrevious() ?: return
         isUndoOrRedo = true
-        val text = editText.editableText
-        val start = edit.start
-        val end = start + if (edit.after != null) edit.after.length else 0
-        text.replace(start, end, edit.before ?: "")
-        isUndoOrRedo = false
-        
-        editText.setSelection((edit.start + (edit.before?.length ?: 0)).coerceAtMost(editText.length()))
-        notifyHistoryChanged()
+        try {
+            val text = editText.editableText
+            val textLength = text.length
+            val start = edit.start.coerceIn(0, textLength)
+            val afterLen = edit.after?.length ?: 0
+            val end = (start + afterLen).coerceIn(start, textLength)
+
+            text.replace(start, end, edit.before ?: "")
+
+            val newSelection = (start + (edit.before?.length ?: 0)).coerceIn(0, text.length)
+            editText.setSelection(newSelection)
+        } catch (e: Exception) {
+            Log.e(TAG, "Error during undo: ${e.message}", e)
+        } finally {
+            isUndoOrRedo = false
+            notifyHistoryChanged()
+        }
     }
 
     fun redo() {
         val edit = editHistory.getNext() ?: return
         isUndoOrRedo = true
-        val text = editText.editableText
-        val start = edit.start
-        val end = start + if (edit.before != null) edit.before.length else 0
-        text.replace(start, end, edit.after ?: "")
-        isUndoOrRedo = false
-        
-        editText.setSelection((edit.start + (edit.after?.length ?: 0)).coerceAtMost(editText.length()))
-        notifyHistoryChanged()
+        try {
+            val text = editText.editableText
+            val textLength = text.length
+            val start = edit.start.coerceIn(0, textLength)
+            val beforeLen = edit.before?.length ?: 0
+            val end = (start + beforeLen).coerceIn(start, textLength)
+
+            text.replace(start, end, edit.after ?: "")
+
+            val newSelection = (start + (edit.after?.length ?: 0)).coerceIn(0, text.length)
+            editText.setSelection(newSelection)
+        } catch (e: Exception) {
+            Log.e(TAG, "Error during redo: ${e.message}", e)
+        } finally {
+            isUndoOrRedo = false
+            notifyHistoryChanged()
+        }
     }
     
     fun clearHistory() {
         editHistory.clear()
+        notifyHistoryChanged()
+    }
+
+    fun addEdit(start: Int, before: CharSequence?, after: CharSequence?) {
+        if (isUndoOrRedo) return
+        editHistory.add(EditItem(start, before, after))
         notifyHistoryChanged()
     }
     
@@ -69,7 +96,14 @@ class UndoRedoHelper(private val editText: EditText) {
 
         override fun beforeTextChanged(s: CharSequence, start: Int, count: Int, after: Int) {
             if (isUndoOrRedo) return
-            beforeText = SpannableStringBuilder(s.subSequence(start, start + count))
+            val sLen = s.length
+            val safeStart = start.coerceIn(0, sLen)
+            val safeEnd = (start + count).coerceIn(safeStart, sLen)
+            beforeText = if (s is android.text.Spanned) {
+                SpannableStringBuilder(s, safeStart, safeEnd)
+            } else {
+                SpannableStringBuilder(s.subSequence(safeStart, safeEnd))
+            }
         }
 
         override fun onTextChanged(s: CharSequence, start: Int, before: Int, count: Int) {
@@ -81,8 +115,11 @@ class UndoRedoHelper(private val editText: EditText) {
         override fun afterTextChanged(s: Editable?) {
             if (isUndoOrRedo) return
             if (s != null) {
-                val afterText = SpannableStringBuilder(s.subSequence(currentStart, currentStart + currentCount))
-                editHistory.add(EditItem(currentStart, beforeText, afterText))
+                val sLen = s.length
+                val safeStart = currentStart.coerceIn(0, sLen)
+                val safeEnd = (currentStart + currentCount).coerceIn(safeStart, sLen)
+                val afterText = SpannableStringBuilder(s, safeStart, safeEnd)
+                editHistory.add(EditItem(safeStart, beforeText, afterText))
             }
             notifyHistoryChanged()
         }
@@ -138,4 +175,8 @@ class UndoRedoHelper(private val editText: EditText) {
         val before: CharSequence?,
         val after: CharSequence?
     )
+
+    companion object {
+        private const val TAG = "UndoRedoHelper"
+    }
 }

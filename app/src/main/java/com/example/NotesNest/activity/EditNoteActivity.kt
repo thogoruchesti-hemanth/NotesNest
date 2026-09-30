@@ -8,10 +8,13 @@ import android.text.Editable
 import android.text.Spannable
 import android.text.SpannableStringBuilder
 import android.text.TextWatcher
+import android.text.style.RelativeSizeSpan
 import android.text.style.StyleSpan
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
+import android.widget.EditText
+import android.widget.ImageButton
 import android.widget.Toast
 import androidx.activity.OnBackPressedCallback
 import androidx.activity.enableEdgeToEdge
@@ -21,6 +24,7 @@ import androidx.core.graphics.ColorUtils
 import androidx.core.graphics.Insets
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
+import androidx.core.widget.ImageViewCompat
 import androidx.lifecycle.ViewModelProvider
 import com.example.NotesNest.R
 import com.example.NotesNest.databases.ViewModels.CategoryViewModel
@@ -199,15 +203,30 @@ class EditNoteActivity : AppCompatActivity() {
         }
     }
 
+    private enum class PrefixType {
+        NONE, H1, H2, BULLET, NUMBERED, CHECKLIST
+    }
+
+    private class HeadingSpan(val level: Int) : StyleSpan(Typeface.BOLD)
+
+    private var isHandlingAutoList = false
+
     private fun setupTextWatchers() {
         binding.etNote.addTextChangedListener(object : TextWatcher {
+            private var insertedStart = 0
+            private var insertedCount = 0
+
             override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
+
             override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
-                if (count > before) {
+                insertedStart = start
+                insertedCount = count
+
+                if (count > before && !isHandlingAutoList) {
                     val editable = binding.etNote.text ?: return
                     val typedStart = start
                     val typedEnd = start + count
-                    
+
                     if (isPendingBold && isPendingItalic) {
                         editable.setSpan(StyleSpan(Typeface.BOLD_ITALIC), typedStart, typedEnd, Spannable.SPAN_EXCLUSIVE_INCLUSIVE)
                         isPendingBold = false
@@ -221,8 +240,26 @@ class EditNoteActivity : AppCompatActivity() {
                     }
                 }
             }
+
             override fun afterTextChanged(s: Editable?) {
+                if (s == null) return
+
+                if (::undoRedoHelper.isInitialized && undoRedoHelper.isUndoOrRedoState) {
+                    insertedCount = 0
+                    cleanupZeroLengthSpans(s)
+                    updateHeadingSpans(s)
+                    updateMetadataLine()
+                    updateFormattingButtonHighlights()
+                    return
+                }
+
+                if (!isHandlingAutoList && insertedCount == 1 && insertedStart < s.length && s[insertedStart] == '\n') {
+                    insertedCount = 0
+                    handleAutoListContinuation(s, insertedStart)
+                }
+
                 cleanupZeroLengthSpans(s)
+                updateHeadingSpans(s)
                 updateMetadataLine()
                 updateFormattingButtonHighlights()
             }
@@ -232,6 +269,45 @@ class EditNoteActivity : AppCompatActivity() {
             isPendingBold = false
             isPendingItalic = false
             updateFormattingButtonHighlights()
+        }
+
+        binding.etNote.setOnTouchListener { v, event ->
+            if (event.action == android.view.MotionEvent.ACTION_UP) {
+                val editText = v as? EditText ?: return@setOnTouchListener false
+                val layout = editText.layout
+                if (layout != null) {
+                    val y = event.y - editText.totalPaddingTop + editText.scrollY
+                    val line = layout.getLineForVertical(y.toInt())
+                    val lineStart = layout.getLineStart(line)
+                    val lineEnd = layout.getLineEnd(line)
+                    val text = editText.text.toString()
+                    if (lineStart < text.length && lineEnd <= text.length && lineStart < lineEnd) {
+                        val lineText = text.substring(lineStart, lineEnd)
+                        val trimmed = lineText.trimStart()
+                        val leading = lineText.takeWhile { it == ' ' || it == '\t' }
+                        val offset = layout.getOffsetForHorizontal(line, event.x - editText.totalPaddingLeft + editText.scrollX)
+
+                        if (offset >= lineStart && offset <= lineStart + leading.length + 3) {
+                            if (trimmed.startsWith("☐ ")) {
+                                isHandlingAutoList = true
+                                editText.text.replace(lineStart + leading.length, lineStart + leading.length + 2, "☑ ")
+                                isHandlingAutoList = false
+                                updateFormattingButtonHighlights()
+                                v.performClick()
+                                return@setOnTouchListener true
+                            } else if (trimmed.startsWith("☑ ")) {
+                                isHandlingAutoList = true
+                                editText.text.replace(lineStart + leading.length, lineStart + leading.length + 2, "☐ ")
+                                isHandlingAutoList = false
+                                updateFormattingButtonHighlights()
+                                v.performClick()
+                                return@setOnTouchListener true
+                            }
+                        }
+                    }
+                }
+            }
+            false
         }
     }
 
@@ -246,7 +322,7 @@ class EditNoteActivity : AppCompatActivity() {
             SimpleDateFormat("d MMM yyyy, h:mm a", Locale.getDefault()).format(Date())
         }
 
-        binding.tvMetadata.text = String.format("%s • %d words (%d chars)", dateStr, wordCount, charCount)
+        binding.tvMetadata.text = String.format(Locale.getDefault(), "%s • %d words (%d chars)", dateStr, wordCount, charCount)
     }
 
     private fun setFormattingListeners() {
@@ -271,11 +347,11 @@ class EditNoteActivity : AppCompatActivity() {
 
         binding.btnBold.setOnClickListener { toggleBold() }
         binding.btnItalic.setOnClickListener { toggleItalic() }
-        binding.btnBulletList.setOnClickListener { prependLinePrefix("- ") }
-        binding.btnNumberedList.setOnClickListener { prependLinePrefix("1. ") }
-        binding.btnChecklist.setOnClickListener { prependLinePrefix("- [ ] ") }
-        binding.btnH1.setOnClickListener { prependLinePrefix("# ") }
-        binding.btnH2.setOnClickListener { prependLinePrefix("## ") }
+        binding.btnBulletList.setOnClickListener { toggleLinePrefix(PrefixType.BULLET) }
+        binding.btnNumberedList.setOnClickListener { toggleLinePrefix(PrefixType.NUMBERED) }
+        binding.btnChecklist.setOnClickListener { toggleLinePrefix(PrefixType.CHECKLIST) }
+        binding.btnH1.setOnClickListener { toggleLinePrefix(PrefixType.H1) }
+        binding.btnH2.setOnClickListener { toggleLinePrefix(PrefixType.H2) }
     }
 
     private fun cleanupZeroLengthSpans(editable: Editable?) {
@@ -331,6 +407,32 @@ class EditNoteActivity : AppCompatActivity() {
         }
     }
 
+    private fun getAdjustedStartOffset(editable: Editable, start: Int, end: Int): Int {
+        val text = editable.toString()
+        val lineStart = text.lastIndexOf('\n', (start - 1).coerceAtLeast(0)).let {
+            if (it < 0) 0 else it + 1
+        }
+        val lineEnd = text.indexOf('\n', start).let {
+            if (it < 0) text.length else it
+        }
+        val lineStr = text.substring(lineStart, lineEnd)
+        val leadingSpaces = lineStr.takeWhile { it == ' ' || it == '\t' }
+        val trimmed = lineStr.substring(leadingSpaces.length)
+
+        var prefixLength = 0
+        when {
+            trimmed.startsWith("- [ ] ") || trimmed.startsWith("- [x] ") || trimmed.startsWith("- [X] ") -> prefixLength = leadingSpaces.length + 6
+            trimmed.startsWith("• ") || trimmed.startsWith("- ") || trimmed.startsWith("* ") -> prefixLength = leadingSpaces.length + 2
+            Regex("^\\d+\\.\\s+").containsMatchIn(trimmed) -> {
+                val match = Regex("^\\d+\\.\\s+").find(trimmed)!!
+                prefixLength = leadingSpaces.length + match.value.length
+            }
+        }
+
+        val contentStart = lineStart + prefixLength
+        return if (start < contentStart && contentStart < end) contentStart else start
+    }
+
     private fun toggleBold() {
         val editable = binding.etNote.text ?: return
         val start = binding.etNote.selectionStart.coerceAtLeast(0)
@@ -339,7 +441,10 @@ class EditNoteActivity : AppCompatActivity() {
         val currentlyBold = isStyleActive(Typeface.BOLD)
 
         if (start != end) {
-            val spans = editable.getSpans(start, end, StyleSpan::class.java)
+            val applyStart = getAdjustedStartOffset(editable, start, end).coerceAtMost(end)
+            val beforeState = SpannableStringBuilder(editable, applyStart, end)
+
+            val spans = editable.getSpans(applyStart, end, StyleSpan::class.java)
             for (span in spans) {
                 if (span.style == Typeface.BOLD) {
                     editable.removeSpan(span)
@@ -353,7 +458,7 @@ class EditNoteActivity : AppCompatActivity() {
             }
             if (!currentlyBold) {
                 // If it has italic, upgrade to bold_italic
-                val italicSpans = editable.getSpans(start, end, StyleSpan::class.java).filter { it.style == Typeface.ITALIC }
+                val italicSpans = editable.getSpans(applyStart, end, StyleSpan::class.java).filter { it.style == Typeface.ITALIC }
                 if (italicSpans.isNotEmpty()) {
                     for (span in italicSpans) {
                         val sStart = editable.getSpanStart(span)
@@ -363,8 +468,13 @@ class EditNoteActivity : AppCompatActivity() {
                         editable.setSpan(StyleSpan(Typeface.BOLD_ITALIC), sStart, sEnd, flags)
                     }
                 } else {
-                    editable.setSpan(StyleSpan(Typeface.BOLD), start, end, Spannable.SPAN_EXCLUSIVE_INCLUSIVE)
+                    editable.setSpan(StyleSpan(Typeface.BOLD), applyStart, end, Spannable.SPAN_EXCLUSIVE_INCLUSIVE)
                 }
+            }
+
+            val afterState = SpannableStringBuilder(editable, applyStart, end)
+            if (::undoRedoHelper.isInitialized) {
+                undoRedoHelper.addEdit(applyStart, beforeState, afterState)
             }
         } else {
             if (currentlyBold) {
@@ -407,7 +517,10 @@ class EditNoteActivity : AppCompatActivity() {
         val currentlyItalic = isStyleActive(Typeface.ITALIC)
 
         if (start != end) {
-            val spans = editable.getSpans(start, end, StyleSpan::class.java)
+            val applyStart = getAdjustedStartOffset(editable, start, end).coerceAtMost(end)
+            val beforeState = SpannableStringBuilder(editable, applyStart, end)
+
+            val spans = editable.getSpans(applyStart, end, StyleSpan::class.java)
             for (span in spans) {
                 if (span.style == Typeface.ITALIC) {
                     editable.removeSpan(span)
@@ -420,7 +533,7 @@ class EditNoteActivity : AppCompatActivity() {
                 }
             }
             if (!currentlyItalic) {
-                val boldSpans = editable.getSpans(start, end, StyleSpan::class.java).filter { it.style == Typeface.BOLD }
+                val boldSpans = editable.getSpans(applyStart, end, StyleSpan::class.java).filter { it.style == Typeface.BOLD }
                 if (boldSpans.isNotEmpty()) {
                     for (span in boldSpans) {
                         val sStart = editable.getSpanStart(span)
@@ -430,8 +543,13 @@ class EditNoteActivity : AppCompatActivity() {
                         editable.setSpan(StyleSpan(Typeface.BOLD_ITALIC), sStart, sEnd, flags)
                     }
                 } else {
-                    editable.setSpan(StyleSpan(Typeface.ITALIC), start, end, Spannable.SPAN_EXCLUSIVE_INCLUSIVE)
+                    editable.setSpan(StyleSpan(Typeface.ITALIC), applyStart, end, Spannable.SPAN_EXCLUSIVE_INCLUSIVE)
                 }
+            }
+
+            val afterState = SpannableStringBuilder(editable, applyStart, end)
+            if (::undoRedoHelper.isInitialized) {
+                undoRedoHelper.addEdit(applyStart, beforeState, afterState)
             }
         } else {
             if (currentlyItalic) {
@@ -466,40 +584,267 @@ class EditNoteActivity : AppCompatActivity() {
         updateFormattingButtonHighlights()
     }
 
+    private fun detectPrefixType(lineText: String, editable: Editable? = null, lineStart: Int = 0, lineEnd: Int = 0): PrefixType {
+        if (editable != null && lineEnd > lineStart) {
+            val headingSpans = editable.getSpans(lineStart, lineEnd, HeadingSpan::class.java)
+            if (headingSpans.isNotEmpty()) {
+                val h = headingSpans.first()
+                if (h.level == 1) return PrefixType.H1
+                if (h.level == 2) return PrefixType.H2
+            }
+        }
+        val trimmed = lineText.trimStart()
+        return when {
+            trimmed.startsWith("## ") || trimmed == "##" -> PrefixType.H2
+            trimmed.startsWith("# ") || trimmed == "#" -> PrefixType.H1
+            trimmed.startsWith("☐ ") || trimmed.startsWith("☑ ") || trimmed == "☐" || trimmed == "☑" ||
+                    trimmed.startsWith("- [ ] ") || trimmed.startsWith("- [x] ") || trimmed.startsWith("- [X] ") ||
+                    trimmed == "- [ ]" || trimmed == "- [x]" || trimmed == "- [X]" -> PrefixType.CHECKLIST
+            trimmed.startsWith("• ") || trimmed.startsWith("- ") || trimmed.startsWith("* ") ||
+                    trimmed == "•" || trimmed == "-" || trimmed == "*" -> PrefixType.BULLET
+            Regex("^\\d+\\.\\s+").containsMatchIn(trimmed) || Regex("^\\d+\\.$").containsMatchIn(trimmed) -> PrefixType.NUMBERED
+            else -> PrefixType.NONE
+        }
+    }
+
+    private fun stripPrefix(lineText: String): String {
+        val leadingSpaces = lineText.takeWhile { it == ' ' || it == '\t' }
+        val trimmed = lineText.substring(leadingSpaces.length)
+        var stripped = when {
+            trimmed.startsWith("## ") -> trimmed.substring(3)
+            trimmed == "##" -> ""
+            trimmed.startsWith("# ") -> trimmed.substring(2)
+            trimmed == "#" -> ""
+            trimmed.startsWith("☐ ") || trimmed.startsWith("☑ ") -> trimmed.substring(2)
+            trimmed == "☐" || trimmed == "☑" -> ""
+            trimmed.startsWith("- [ ] ") || trimmed.startsWith("- [x] ") || trimmed.startsWith("- [X] ") -> trimmed.substring(6)
+            trimmed == "- [ ]" || trimmed == "- [x]" || trimmed == "- [X]" -> ""
+            trimmed.startsWith("• ") || trimmed.startsWith("- ") || trimmed.startsWith("* ") -> trimmed.substring(2)
+            trimmed == "•" || trimmed == "-" || trimmed == "*" -> ""
+            Regex("^\\d+\\.\\s+").containsMatchIn(trimmed) -> trimmed.replaceFirst(Regex("^\\d+\\.\\s+"), "")
+            Regex("^\\d+\\.$").containsMatchIn(trimmed) -> trimmed.replaceFirst(Regex("^\\d+\\.$"), "")
+            else -> trimmed
+        }
+
+        stripped = stripped.replace(Regex("[•\\-\\s]+$"), "")
+        stripped = stripped.replace(Regex("(\\s*\\d+\\.\\s*)+$"), "")
+
+        return leadingSpaces + stripped
+    }
+
+    private fun toggleLinePrefix(targetType: PrefixType) {
+        val editable = binding.etNote.text ?: return
+        val text = editable.toString()
+        val selStart = binding.etNote.selectionStart.coerceIn(0, editable.length)
+        val selEnd = binding.etNote.selectionEnd.coerceIn(0, editable.length)
+
+        val startLineOffset = text.lastIndexOf('\n', (selStart - 1).coerceAtLeast(0)).let {
+            if (it < 0) 0 else it + 1
+        }
+        val nextNewline = text.indexOf('\n', selEnd)
+        val endLineOffset = if (nextNewline < 0) editable.length else nextNewline
+
+        val blockText = text.substring(startLineOffset, endLineOffset)
+        val rawLines = if (targetType != PrefixType.NONE && blockText.contains(" • ")) {
+            blockText.split(Regex("\\s*•\\s*")).filter { it.isNotEmpty() }
+        } else {
+            blockText.split("\n")
+        }
+
+        var currentOffset = startLineOffset
+        val allSelectedHaveTargetType = rawLines.all { line ->
+            val lEnd = currentOffset + line.length
+            val res = detectPrefixType(line, editable, currentOffset, lEnd) == targetType
+            currentOffset = lEnd + 1
+            res
+        }
+
+        val oldHeadingSpans = editable.getSpans(startLineOffset, endLineOffset, HeadingSpan::class.java)
+        for (span in oldHeadingSpans) {
+            editable.removeSpan(span)
+        }
+        val oldSizeSpans = editable.getSpans(startLineOffset, endLineOffset, RelativeSizeSpan::class.java)
+        for (span in oldSizeSpans) {
+            editable.removeSpan(span)
+        }
+
+        val newLines = ArrayList<String>(rawLines.size)
+        for ((index, line) in rawLines.withIndex()) {
+            if (allSelectedHaveTargetType) {
+                if (targetType == PrefixType.CHECKLIST) {
+                    val trimmed = line.trimStart()
+                    val leading = line.takeWhile { it == ' ' || it == '\t' }
+                    if (trimmed.startsWith("☐ ")) {
+                        newLines.add(leading + "☑ " + trimmed.substring(2))
+                    } else if (trimmed.startsWith("- [ ] ")) {
+                        newLines.add(leading + "☑ " + trimmed.substring(6))
+                    } else {
+                        newLines.add(stripPrefix(line))
+                    }
+                } else {
+                    newLines.add(stripPrefix(line))
+                }
+            } else {
+                val stripped = stripPrefix(line)
+                val prefix = when (targetType) {
+                    PrefixType.H1, PrefixType.H2 -> ""
+                    PrefixType.BULLET -> "• "
+                    PrefixType.NUMBERED -> "${index + 1}. "
+                    PrefixType.CHECKLIST -> "☐ "
+                    PrefixType.NONE -> ""
+                }
+                newLines.add(prefix + stripped)
+            }
+        }
+
+        val newBlockText = newLines.joinToString("\n")
+        editable.replace(startLineOffset, endLineOffset, newBlockText)
+
+        if (!allSelectedHaveTargetType && (targetType == PrefixType.H1 || targetType == PrefixType.H2)) {
+            var lineStart = startLineOffset
+            for (line in newLines) {
+                val lineEnd = lineStart + line.length
+                val level = if (targetType == PrefixType.H1) 1 else 2
+                val relSize = if (targetType == PrefixType.H1) 1.35f else 1.20f
+                val flag = if (lineStart == lineEnd) Spannable.SPAN_INCLUSIVE_INCLUSIVE else Spannable.SPAN_EXCLUSIVE_INCLUSIVE
+                editable.setSpan(HeadingSpan(level), lineStart, lineEnd, flag)
+                editable.setSpan(RelativeSizeSpan(relSize), lineStart, lineEnd, flag)
+                lineStart = lineEnd + 1
+            }
+        }
+
+        val delta = newBlockText.length - blockText.length
+        val newSelEnd = (selEnd + delta).coerceIn(0, editable.length)
+        binding.etNote.setSelection(newSelEnd)
+
+        updateHeadingSpans(editable)
+        updateFormattingButtonHighlights()
+    }
+
+    private fun updateHeadingSpans(editable: Editable?) {
+        if (editable == null) return
+
+        val text = editable.toString()
+        val headingSpans = editable.getSpans(0, editable.length, HeadingSpan::class.java)
+
+        for (span in headingSpans) {
+            val spanStart = editable.getSpanStart(span)
+            val spanEnd = editable.getSpanEnd(span)
+
+            if (spanStart >= spanEnd || spanStart >= text.length) {
+                editable.removeSpan(span)
+                continue
+            }
+
+            val lineStart = text.lastIndexOf('\n', (spanStart - 1).coerceAtLeast(0)).let {
+                if (it < 0) 0 else it + 1
+            }
+            val nextNewline = text.indexOf('\n', spanStart)
+            val lineEnd = if (nextNewline < 0) text.length else nextNewline
+
+            // Truncate heading span if it extends past newline onto next line
+            if (spanEnd > lineEnd) {
+                editable.removeSpan(span)
+                if (lineStart < lineEnd) {
+                    editable.setSpan(HeadingSpan(span.level), lineStart, lineEnd, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE)
+                }
+            }
+
+            val sizeSpans = editable.getSpans(lineStart, lineEnd, RelativeSizeSpan::class.java)
+            for (s in sizeSpans) {
+                editable.removeSpan(s)
+            }
+
+            if (lineStart < lineEnd) {
+                val relSize = if (span.level == 1) 1.35f else 1.20f
+                editable.setSpan(RelativeSizeSpan(relSize), lineStart, lineEnd, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE)
+            } else {
+                editable.removeSpan(span)
+            }
+        }
+    }
+
+    private fun handleAutoListContinuation(editable: Editable, newlineOffset: Int) {
+        if (newlineOffset <= 0) return
+
+        val text = editable.toString()
+        val prevLineEnd = newlineOffset
+        val prevLineStart = text.lastIndexOf('\n', prevLineEnd - 1).let {
+            if (it < 0) 0 else it + 1
+        }
+
+        val prevLineText = text.substring(prevLineStart, prevLineEnd)
+        val prefixType = detectPrefixType(prevLineText, editable, prevLineStart, prevLineEnd)
+
+        if (prefixType == PrefixType.BULLET || prefixType == PrefixType.NUMBERED || prefixType == PrefixType.CHECKLIST) {
+            val stripped = stripPrefix(prevLineText)
+            if (stripped.trim().isEmpty()) {
+                isHandlingAutoList = true
+                editable.replace(prevLineStart, newlineOffset, "")
+                isHandlingAutoList = false
+            } else {
+                val nextPrefix = when (prefixType) {
+                    PrefixType.BULLET -> "• "
+                    PrefixType.CHECKLIST -> "☐ "
+                    PrefixType.NUMBERED -> {
+                        val numMatch = Regex("^\\s*(\\d+)\\.").find(prevLineText)
+                        val nextNum = (numMatch?.groupValues?.get(1)?.toIntOrNull() ?: 1) + 1
+                        "$nextNum. "
+                    }
+                    else -> ""
+                }
+
+                if (nextPrefix.isNotEmpty()) {
+                    isHandlingAutoList = true
+                    editable.insert(newlineOffset + 1, nextPrefix)
+                    isHandlingAutoList = false
+                }
+            }
+        }
+    }
+
     private fun updateFormattingButtonHighlights() {
         val isBold = isStyleActive(Typeface.BOLD)
         val isItalic = isStyleActive(Typeface.ITALIC)
 
-        val yellowColor = ContextCompat.getColor(this, R.color.tabSelectedTextColor)
-        val bgHighlightColor = Color.parseColor("#33FFF3B6")
+        val editable = binding.etNote.text
+        var activePrefix = PrefixType.NONE
 
-        if (isBold) {
-            binding.btnBold.backgroundTintList = ColorStateList.valueOf(bgHighlightColor)
-            binding.btnBold.setColorFilter(yellowColor)
-        } else {
-            binding.btnBold.backgroundTintList = null
-            binding.btnBold.setColorFilter(Color.WHITE)
+        if (editable != null && editable.isNotEmpty()) {
+            val selStart = binding.etNote.selectionStart.coerceIn(0, editable.length)
+
+            val text = editable.toString()
+            val startLineOffset = text.lastIndexOf('\n', (selStart - 1).coerceAtLeast(0)).let {
+                if (it < 0) 0 else it + 1
+            }
+            val nextNewline = text.indexOf('\n', selStart)
+            val endLineOffset = if (nextNewline < 0) text.length else nextNewline
+
+            val currentLineText = text.substring(startLineOffset, endLineOffset)
+            activePrefix = detectPrefixType(currentLineText, editable, startLineOffset, endLineOffset)
         }
 
-        if (isItalic) {
-            binding.btnItalic.backgroundTintList = ColorStateList.valueOf(bgHighlightColor)
-            binding.btnItalic.setColorFilter(yellowColor)
-        } else {
-            binding.btnItalic.backgroundTintList = null
-            binding.btnItalic.setColorFilter(Color.WHITE)
-        }
+        setButtonHighlight(binding.btnBold, isBold)
+        setButtonHighlight(binding.btnItalic, isItalic)
+        setButtonHighlight(binding.btnH1, activePrefix == PrefixType.H1)
+        setButtonHighlight(binding.btnH2, activePrefix == PrefixType.H2)
+        setButtonHighlight(binding.btnBulletList, activePrefix == PrefixType.BULLET)
+        setButtonHighlight(binding.btnNumberedList, activePrefix == PrefixType.NUMBERED)
+        setButtonHighlight(binding.btnChecklist, activePrefix == PrefixType.CHECKLIST)
     }
 
-    private fun prependLinePrefix(prefix: String) {
-        val start = binding.etNote.selectionStart.coerceAtLeast(0)
-        val editable = binding.etNote.text ?: return
-        val text = editable.toString()
+    private val highlightBgColor by lazy { Color.parseColor("#33FFF3B6") }
 
-        var lineStart = text.lastIndexOf('\n', (start - 1).coerceAtLeast(0))
-        lineStart = if (lineStart < 0) 0 else lineStart + 1
+    private fun setButtonHighlight(button: ImageButton, isActive: Boolean) {
+        val yellowColor = ContextCompat.getColor(this, R.color.tabSelectedTextColor)
 
-        editable.insert(lineStart, prefix)
-        binding.etNote.setSelection((start + prefix.length).coerceAtMost(editable.length))
+        if (isActive) {
+            button.backgroundTintList = ColorStateList.valueOf(highlightBgColor)
+            ImageViewCompat.setImageTintList(button, ColorStateList.valueOf(yellowColor))
+        } else {
+            button.backgroundTintList = ColorStateList.valueOf(Color.TRANSPARENT)
+            ImageViewCompat.setImageTintList(button, ColorStateList.valueOf(Color.WHITE))
+        }
     }
 
     private fun getMarkdownFromEditText(): String {
@@ -507,52 +852,103 @@ class EditNoteActivity : AppCompatActivity() {
         val text = editable.toString()
         if (text.isEmpty()) return ""
 
-        val spans = editable.getSpans(0, editable.length, StyleSpan::class.java)
-        val styles = IntArray(editable.length)
-        for (span in spans) {
-            val start = editable.getSpanStart(span).coerceAtLeast(0)
-            val end = editable.getSpanEnd(span).coerceAtMost(editable.length)
-            for (i in start until end) {
-                if (span.style == Typeface.BOLD) styles[i] = styles[i] or 1
-                else if (span.style == Typeface.ITALIC) styles[i] = styles[i] or 2
-                else if (span.style == Typeface.BOLD_ITALIC) styles[i] = styles[i] or 3
+        val lines = text.split("\n")
+        val sb = StringBuilder()
+        var lineStart = 0
+
+        for ((i, line) in lines.withIndex()) {
+            val lineEnd = lineStart + line.length
+            val headingSpans = editable.getSpans(lineStart, lineEnd, HeadingSpan::class.java)
+
+            var resultLine = formatLineSpanStyles(editable, text, lineStart, lineEnd)
+
+            if (headingSpans.isNotEmpty()) {
+                val level = headingSpans.first().level
+                val prefix = if (level == 1) "# " else "## "
+                resultLine = prefix + resultLine
+            }
+
+            sb.append(resultLine)
+            if (i < lines.size - 1) sb.append("\n")
+
+            lineStart = lineEnd + 1
+        }
+
+        return sb.toString()
+    }
+
+    private fun formatLineSpanStyles(editable: Editable, fullText: String, start: Int, end: Int): String {
+        if (start >= end) return ""
+        val lineStr = fullText.substring(start, end)
+
+        var prefixLength = 0
+        var prefixStr = ""
+        val leadingSpaces = lineStr.takeWhile { it == ' ' || it == '\t' }
+        val trimmed = lineStr.substring(leadingSpaces.length)
+
+        when {
+            trimmed.startsWith("☐ ") -> { prefixLength = leadingSpaces.length + 2; prefixStr = leadingSpaces + "- [ ] " }
+            trimmed.startsWith("☑ ") -> { prefixLength = leadingSpaces.length + 2; prefixStr = leadingSpaces + "- [x] " }
+            trimmed.startsWith("- [ ] ") -> { prefixLength = leadingSpaces.length + 6; prefixStr = leadingSpaces + "- [ ] " }
+            trimmed.startsWith("- [x] ") || trimmed.startsWith("- [X] ") -> { prefixLength = leadingSpaces.length + 6; prefixStr = leadingSpaces + "- [x] " }
+            trimmed.startsWith("• ") || trimmed.startsWith("- ") || trimmed.startsWith("* ") -> { prefixLength = leadingSpaces.length + 2; prefixStr = leadingSpaces + "- " }
+            Regex("^\\d+\\.\\s+").containsMatchIn(trimmed) -> {
+                val match = Regex("^\\d+\\.\\s+").find(trimmed)!!
+                prefixLength = leadingSpaces.length + match.value.length
+                prefixStr = leadingSpaces + match.value
             }
         }
 
+        val contentStart = start + prefixLength
+        if (contentStart >= end) return prefixStr + fullText.substring(contentStart, end)
+
+        val spans = editable.getSpans(contentStart, end, StyleSpan::class.java).filter { it !is HeadingSpan }
+        if (spans.isEmpty()) return prefixStr + fullText.substring(contentStart, end)
+
+        val styles = IntArray(end - contentStart)
+        for (span in spans) {
+            val s = editable.getSpanStart(span).coerceAtLeast(contentStart) - contentStart
+            val e = editable.getSpanEnd(span).coerceAtMost(end) - contentStart
+            for (k in s until e) {
+                if (k in styles.indices) {
+                    if (span.style == Typeface.BOLD) styles[k] = styles[k] or 1
+                    else if (span.style == Typeface.ITALIC) styles[k] = styles[k] or 2
+                    else if (span.style == Typeface.BOLD_ITALIC) styles[k] = styles[k] or 3
+                }
+            }
+        }
+
+        val contentText = fullText.substring(contentStart, end)
         val sb = StringBuilder()
         var currentStyle = 0
         var chunkStart = 0
 
-        for (i in 0..editable.length) {
-            val style = if (i < editable.length) styles[i] else 0
-            if (style != currentStyle || i == editable.length) {
+        for (i in 0..contentText.length) {
+            val style = if (i < contentText.length) styles[i] else 0
+            if (style != currentStyle || i == contentText.length) {
                 if (chunkStart < i) {
-                    val chunk = text.substring(chunkStart, i)
+                    val chunk = contentText.substring(chunkStart, i)
                     val trimmedChunk = chunk.trim()
-                    
                     if (trimmedChunk.isEmpty()) {
-                        // The entire chunk is whitespace. Don't double spaces.
                         sb.append(chunk)
                     } else {
-                        val leadingSpaces = chunk.takeWhile { it.isWhitespace() }
-                        val trailingSpaces = chunk.takeLastWhile { it.isWhitespace() }
-
-                        sb.append(leadingSpaces)
-                        val prefix = when (currentStyle) {
+                        val leading = chunk.takeWhile { it.isWhitespace() }
+                        val trailing = chunk.takeLastWhile { it.isWhitespace() }
+                        val mark = when (currentStyle) {
                             1 -> "**"
                             2 -> "*"
                             3 -> "***"
                             else -> ""
                         }
-                        sb.append(prefix).append(trimmedChunk).append(prefix)
-                        sb.append(trailingSpaces)
+                        sb.append(leading).append(mark).append(trimmedChunk).append(mark).append(trailing)
                     }
                 }
                 currentStyle = style
                 chunkStart = i
             }
         }
-        return sb.toString()
+
+        return prefixStr + sb.toString()
     }
 
     private fun loadContentToEditText(content: String?) {
@@ -570,7 +966,37 @@ class EditNoteActivity : AppCompatActivity() {
             content
         }
 
-        val spannable = SpannableStringBuilder(rawText)
+        val lines = rawText.split("\n")
+        val processedLines = ArrayList<String>(lines.size)
+        val headingLevels = IntArray(lines.size)
+
+        for ((i, line) in lines.withIndex()) {
+            val trimmed = line.trimStart()
+            if (trimmed.startsWith("## ")) {
+                headingLevels[i] = 2
+                processedLines.add(line.replaceFirst("## ", ""))
+            } else if (trimmed.startsWith("# ")) {
+                headingLevels[i] = 1
+                processedLines.add(line.replaceFirst("# ", ""))
+            } else if (trimmed.startsWith("- [x] ") || trimmed.startsWith("- [X] ")) {
+                processedLines.add(line.replaceFirst(Regex("-\\s*\\[[xX]\\]\\s*"), "☑ "))
+            } else if (trimmed.startsWith("- [ ] ")) {
+                processedLines.add(line.replaceFirst(Regex("-\\s*\\[\\s*\\]\\s*"), "☐ "))
+            } else if (trimmed.startsWith("* [x] ") || trimmed.startsWith("* [X] ")) {
+                processedLines.add(line.replaceFirst(Regex("\\*\\s*\\[[xX]\\]\\s*"), "☑ "))
+            } else if (trimmed.startsWith("* [ ] ")) {
+                processedLines.add(line.replaceFirst(Regex("\\*\\s*\\[\\s*\\]\\s*"), "☐ "))
+            } else if (trimmed.startsWith("- ") && !trimmed.startsWith("- [ ]") && !trimmed.startsWith("- [x]") && !trimmed.startsWith("- [X]")) {
+                processedLines.add(line.replaceFirst("- ", "• "))
+            } else if (trimmed.startsWith("* ") && !trimmed.startsWith("* [ ]") && !trimmed.startsWith("* [x]")) {
+                processedLines.add(line.replaceFirst("* ", "• "))
+            } else {
+                processedLines.add(line)
+            }
+        }
+
+        val parsedText = processedLines.joinToString("\n")
+        val spannable = SpannableStringBuilder(parsedText)
 
         // Parse ***bold italic***
         val boldItalicRegex = Regex("\\*\\*\\*(.*?)\\*\\*\\*")
@@ -608,39 +1034,23 @@ class EditNoteActivity : AppCompatActivity() {
             match = italicRegex.find(spannable, start + innerText.length)
         }
 
-        // Merge overlapping BOLD and ITALIC spans into BOLD_ITALIC
-        val spans = spannable.getSpans(0, spannable.length, StyleSpan::class.java)
-        val styles = IntArray(spannable.length)
-        for (span in spans) {
-            val start = spannable.getSpanStart(span)
-            val end = spannable.getSpanEnd(span)
-            for (i in start until end) {
-                if (span.style == Typeface.BOLD) styles[i] = styles[i] or 1
-                else if (span.style == Typeface.ITALIC) styles[i] = styles[i] or 2
-                else if (span.style == Typeface.BOLD_ITALIC) styles[i] = styles[i] or 3
+        var currentOffset = 0
+        val textString = spannable.toString()
+        val finalLines = textString.split("\n")
+        for ((i, line) in finalLines.withIndex()) {
+            val lineEnd = currentOffset + line.length
+            val level = if (i < headingLevels.size) headingLevels[i] else 0
+            if (level == 1) {
+                spannable.setSpan(HeadingSpan(1), currentOffset, lineEnd, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE)
+                spannable.setSpan(RelativeSizeSpan(1.35f), currentOffset, lineEnd, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE)
+            } else if (level == 2) {
+                spannable.setSpan(HeadingSpan(2), currentOffset, lineEnd, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE)
+                spannable.setSpan(RelativeSizeSpan(1.20f), currentOffset, lineEnd, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE)
             }
-            spannable.removeSpan(span)
+            currentOffset = lineEnd + 1
         }
 
-        var currentStyle = 0
-        var currentStart = -1
-        for (i in 0..spannable.length) {
-            val style = if (i < spannable.length) styles[i] else 0
-            if (style != currentStyle) {
-                if (currentStyle != 0) {
-                    val typeface = when (currentStyle) {
-                        1 -> Typeface.BOLD
-                        2 -> Typeface.ITALIC
-                        else -> Typeface.BOLD_ITALIC
-                    }
-                    spannable.setSpan(StyleSpan(typeface), currentStart, i, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE)
-                }
-                currentStyle = style
-                currentStart = i
-            }
-        }
-
-        binding.etNote.setText(if (spannable.isNotEmpty()) spannable else rawText)
+        binding.etNote.setText(spannable)
         if (::undoRedoHelper.isInitialized) {
             undoRedoHelper.clearHistory()
         }
@@ -757,20 +1167,40 @@ class EditNoteActivity : AppCompatActivity() {
             Color.WHITE
         }
 
-        val colorStateList = ColorStateList(
+        val luminance = ColorUtils.calculateLuminance(baseColor)
+
+        // Selected Category Chip: Solid Black background, White text
+        val selectedBg = Color.BLACK
+        val selectedText = Color.WHITE
+
+        // Normal / Deselected Category Chip: Soft translucent tint
+        val unselectedBg = if (luminance > 0.45) {
+            ColorUtils.blendARGB(baseColor, Color.WHITE, 0.50f)
+        } else {
+            ColorUtils.blendARGB(baseColor, Color.BLACK, 0.25f)
+        }
+        val unselectedText = if (luminance > 0.45) Color.argb(200, 0, 0, 0) else Color.argb(200, 255, 255, 255)
+
+        val bgStateList = ColorStateList(
             arrayOf(
                 intArrayOf(android.R.attr.state_checked),
                 intArrayOf()
             ),
-            intArrayOf(
-                ColorUtils.blendARGB(baseColor, Color.BLACK, 0.3f),
-                ColorUtils.blendARGB(baseColor, Color.WHITE, 0.2f)
-            )
+            intArrayOf(selectedBg, unselectedBg)
+        )
+
+        val textStateList = ColorStateList(
+            arrayOf(
+                intArrayOf(android.R.attr.state_checked),
+                intArrayOf()
+            ),
+            intArrayOf(selectedText, unselectedText)
         )
 
         for (i in 0 until binding.categoryChipGroup.childCount) {
             val chip = binding.categoryChipGroup.getChildAt(i) as? Chip ?: continue
-            chip.chipBackgroundColor = colorStateList
+            chip.chipBackgroundColor = bgStateList
+            chip.setTextColor(textStateList)
             chip.chipStrokeWidth = 0f
         }
     }
@@ -835,10 +1265,10 @@ class EditNoteActivity : AppCompatActivity() {
 
         if (isPinned) {
             binding.btnPin.setImageResource(R.drawable.ic_pinned)
-            binding.btnPin.setColorFilter(ContextCompat.getColor(this, R.color.tabSelectedTextColor))
+            ImageViewCompat.setImageTintList(binding.btnPin, ColorStateList.valueOf(ContextCompat.getColor(this, R.color.black)))
         } else {
             binding.btnPin.setImageResource(R.drawable.ic_unpinned)
-            binding.btnPin.setColorFilter(activeColor)
+            ImageViewCompat.setImageTintList(binding.btnPin, ColorStateList.valueOf(activeColor))
         }
     }
 

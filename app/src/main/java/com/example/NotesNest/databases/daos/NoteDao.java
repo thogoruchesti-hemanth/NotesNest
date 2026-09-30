@@ -19,12 +19,12 @@ public interface NoteDao {
     // FETCH NOTES (LiveData)
     // ------------------------------------------
 
-    // All notes for a user - ORDER BY isPinned DESC, then createdAt DESC
-    @Query("SELECT * FROM notes WHERE userId = :userId AND isDeleted = 0 ORDER BY isPinned DESC, createdAt DESC")
+    // All notes for a user - ORDER BY isPinned DESC, then updatedAt DESC, createdAt DESC
+    @Query("SELECT * FROM notes WHERE userId = :userId AND isDeleted = 0 ORDER BY isPinned DESC, updatedAt DESC, createdAt DESC")
     LiveData<List<NoteEntity>> getAllNotes(String userId);
 
     // Notes by category
-    @Query("SELECT * FROM notes WHERE userId = :userId AND categoryId = :categoryId AND isDeleted = 0 ORDER BY isPinned DESC, createdAt DESC")
+    @Query("SELECT * FROM notes WHERE userId = :userId AND categoryId = :categoryId AND isDeleted = 0 ORDER BY isPinned DESC, updatedAt DESC, createdAt DESC")
     LiveData<List<NoteEntity>> getNotesByCategory(String userId, String categoryId);
 
     // Get note by ID
@@ -51,13 +51,13 @@ public interface NoteDao {
     // Normal LIKE search
     @Query("SELECT * FROM notes WHERE userId = :userId AND isDeleted = 0 AND " +
             "(title LIKE '%' || :keyword || '%' OR content LIKE '%' || :keyword || '%') " +
-            "ORDER BY isPinned DESC, createdAt DESC")
+            "ORDER BY isPinned DESC, updatedAt DESC, createdAt DESC")
     LiveData<List<NoteEntity>> searchNotes(String userId, String keyword);
 
     // Category-specific search
     @Query("SELECT * FROM notes WHERE userId = :userId AND categoryId = :categoryId AND isDeleted = 0 AND " +
             "(title LIKE '%' || :keyword || '%' OR content LIKE '%' || :keyword || '%') " +
-            "ORDER BY isPinned DESC, createdAt DESC")
+            "ORDER BY isPinned DESC, updatedAt DESC, createdAt DESC")
     LiveData<List<NoteEntity>> searchNotesInCategory(String userId, String categoryId, String keyword);
 
     // Full-text Search (FTS)
