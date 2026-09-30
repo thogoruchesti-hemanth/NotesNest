@@ -160,7 +160,7 @@ public class NotesFragment extends Fragment implements ThemeManager.ThemeChangeL
 
 
         if (context != null) {
-            unselectedTabColor = getThemeColor(context, com.google.android.material.R.attr.colorPrimary);
+            unselectedTabColor = getThemeColor(context, androidx.appcompat.R.attr.colorPrimary);
         }
 
         noteViewModel = new ViewModelProvider(requireActivity()).get(NoteViewModel.class);
@@ -618,7 +618,7 @@ public class NotesFragment extends Fragment implements ThemeManager.ThemeChangeL
     @Override
     public void onThemeChanged(@NonNull String newTheme) {
         if (!isAdded()) return;
-        unselectedTabColor = getThemeColor(requireContext(), com.google.android.material.R.attr.colorPrimary);
+        unselectedTabColor = getThemeColor(requireContext(), androidx.appcompat.R.attr.colorPrimary);
         buildTabs();
         runSearch(searchEditText.getText().toString().trim());
     }

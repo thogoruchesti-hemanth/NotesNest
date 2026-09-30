@@ -31,10 +31,9 @@ import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 
+import com.squareup.picasso.Picasso;
+
 import java.io.ByteArrayOutputStream;
-import java.io.InputStream;
-import java.net.HttpURLConnection;
-import java.net.URL;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.HashMap;
@@ -506,11 +505,12 @@ public class FirebaseHelper {
         CompletableFuture.runAsync(() -> {
             String base64 = "";
             try {
-                URL url = new URL(imageUrl);
-                HttpURLConnection connection = (HttpURLConnection) url.openConnection();
-                connection.connect();
-                InputStream input = connection.getInputStream();
-                Bitmap bitmap = BitmapFactory.decodeStream(input);
+                Bitmap bitmap = Picasso.get()
+                        .load(imageUrl)
+                        .resize(500, 500)
+                        .centerInside()
+                        .onlyScaleDown()
+                        .get();
 
                 if (bitmap != null) {
                     ByteArrayOutputStream baos = new ByteArrayOutputStream();
