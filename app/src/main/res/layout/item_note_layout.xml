@@ -3,8 +3,8 @@
     android:id="@+id/layoutNoteItem"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:layout_marginEnd="@dimen/margin_10"
-    android:layout_marginBottom="@dimen/margin_10"
+    android:layout_marginHorizontal="4dp"
+    android:layout_marginBottom="8dp"
     app:cardCornerRadius="@dimen/radius_8"
     app:cardElevation="@dimen/elevation_2">
 

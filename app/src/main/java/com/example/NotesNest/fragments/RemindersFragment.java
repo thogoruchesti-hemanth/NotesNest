@@ -38,6 +38,7 @@ import java.time.YearMonth;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
@@ -207,7 +208,7 @@ public class RemindersFragment extends Fragment {
         }
         
         // Sort currentReminders by time
-        currentReminders.sort((o1, o2) -> Long.compare(o1.notificationTime, o2.notificationTime));
+        currentReminders.sort(Comparator.comparingLong(o -> o.notificationTime));
         
         updateUIWithReminders();
     }
@@ -375,7 +376,7 @@ public class RemindersFragment extends Fragment {
                 int total = calendarAdapter.getItemCount();
 
                 if (lastVisible == total - 1) {
-                    appendNextMonth();
+                    recyclerView.post(() -> appendNextMonth());
                 }
             }
         });
@@ -413,6 +414,14 @@ public class RemindersFragment extends Fragment {
     }
 
     private void appendNextMonth() {
+        if (calendarRv != null && calendarRv.isComputingLayout()) {
+            calendarRv.post(this::appendNextMonthInternal);
+        } else {
+            appendNextMonthInternal();
+        }
+    }
+
+    private void appendNextMonthInternal() {
         YearMonth currentMonth = YearMonth.from(selectedDate);
         YearMonth nextMonth = currentMonth.plusMonths(1);
 

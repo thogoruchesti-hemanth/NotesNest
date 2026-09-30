@@ -80,7 +80,9 @@
     <string name="text_create_note">Create Note</string>
     <string name="text_edit_icon">edit icon</string>
     <string name="text_all_notes">All Notes</string>
+    <string name="text_notes">Notes</string>
     <string name="text_reminders">Reminders</string>
+    <string name="text_profile">Profile</string>
     <string name="text_reminder_icon">reminder icon</string>
     <string name="text_notes_icon">notes icon</string>
     <string name="text_settings">Settings</string>

@@ -347,7 +347,6 @@ public class CommonDialogs {
                 .show();
     }
 
-    @RequiresApi(api = Build.VERSION_CODES.UPSIDE_DOWN_CAKE)
     public static void showNoteContentDialog(Context context, NoteEntity note, NoteDialogCallback callback) {
         AlertDialog.Builder builder = new AlertDialog.Builder(context, R.style.CustomAlertDialog);
         View view = LayoutInflater.from(context).inflate(R.layout.dialog_note_full_content, null);
@@ -368,7 +367,7 @@ public class CommonDialogs {
         ivPinned.setVisibility(note.isPinned ? View.VISIBLE : View.GONE);
         ivPinned.setImageResource(note.isPinned ? R.drawable.ic_pinned : R.drawable.ic_unpinned);
 
-        setupResponsiveCheckboxes(context, content, note, callback);
+        MarkdownHelper.renderMarkdown(content, note.content);
 
         callback.setDateTime(note.createdAt, date, time);
         callback.setCategory(category, note.categoryId);
@@ -392,7 +391,9 @@ public class CommonDialogs {
                 Intent intent = new Intent(Intent.ACTION_SEND);
                 intent.setType("text/plain");
                 intent.putExtra(Intent.EXTRA_SUBJECT, note.title);
-                intent.putExtra(Intent.EXTRA_TEXT, note.title + "\n\n" + Html.fromHtml(note.content, Html.FROM_HTML_MODE_LEGACY));
+                String shareBody = MarkdownHelper.isHtmlContent(note.content) ?
+                        MarkdownHelper.convertHtmlToMarkdown(note.content) : note.content;
+                intent.putExtra(Intent.EXTRA_TEXT, note.title + "\n\n" + shareBody);
                 context.startActivity(Intent.createChooser(intent, "Share Note as Text"));
             });
 
@@ -414,7 +415,6 @@ public class CommonDialogs {
         dialog.show();
     }
 
-    @RequiresApi(api = Build.VERSION_CODES.UPSIDE_DOWN_CAKE)
     private static void setupResponsiveCheckboxes(Context context, TextView tv, NoteEntity note, NoteDialogCallback callback) {
         String converted = HtmlListConverter.convertHtmlLists(note.content);
         SpannableStringBuilder builder = new SpannableStringBuilder(Html.fromHtml(converted, Html.FROM_HTML_MODE_LEGACY));
@@ -433,7 +433,6 @@ public class CommonDialogs {
             builder.setSpan(new AbsoluteSizeSpan(22, true), start, end, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
 
             builder.setSpan(new ClickableSpan() {
-                @RequiresApi(api = Build.VERSION_CODES.UPSIDE_DOWN_CAKE)
                 @Override
                 public void onClick(@NonNull View widget) {
                     toggleNoteCheckbox(context, note, start, icon == '☐', callback, tv);
@@ -451,7 +450,6 @@ public class CommonDialogs {
         tv.setMovementMethod(LinkMovementMethod.getInstance());
     }
 
-    @RequiresApi(api = Build.VERSION_CODES.UPSIDE_DOWN_CAKE)
     private static void toggleNoteCheckbox(Context context, NoteEntity note, int charPos, boolean shouldCheck, NoteDialogCallback callback, TextView tv) {
         String html = note.content;
         Pattern pattern = Pattern.compile("<input[^>]*type=\"checkbox\"[^>]*>", Pattern.CASE_INSENSITIVE);
@@ -464,7 +462,7 @@ public class CommonDialogs {
             if (c == '☐' || c == '☑') clickedIndex++;
         }
 
-        StringBuilder sb = new StringBuilder();
+        StringBuffer sb = new StringBuffer();
         int currentIndex = 0;
         while (matcher.find()) {
             if (currentIndex == clickedIndex) {

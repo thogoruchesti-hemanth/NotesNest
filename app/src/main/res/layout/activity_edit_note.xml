@@ -4,9 +4,9 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/edit_note_layout"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:paddingTop="@dimen/padding_16">
+    android:layout_height="match_parent">
 
+    <!-- Top Header Layout -->
     <LinearLayout
         android:id="@+id/headerLayout"
         android:layout_width="match_parent"
@@ -14,48 +14,53 @@
         android:gravity="center_vertical"
         android:orientation="horizontal"
         android:paddingHorizontal="@dimen/padding_16"
-        android:paddingTop="@dimen/padding_16"
-        android:paddingBottom="@dimen/padding_16">
+        android:paddingTop="20dp"
+        android:paddingBottom="12dp">
 
         <ImageButton
             android:id="@+id/btnBack"
-            android:layout_width="@dimen/size_48"
-            android:layout_height="@dimen/size_48"
+            android:layout_width="@dimen/size_40"
+            android:layout_height="@dimen/size_40"
             android:background="?attr/selectableItemBackgroundBorderless"
             android:contentDescription="@string/text_back"
             android:src="@drawable/ic_back_arrow"
-            app:tint="@color/black" />
+            app:tint="?attr/colorPrimary" />
 
         <TextView
+            android:id="@+id/tvHeaderTitle"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_marginStart="@dimen/margin_16"
+            android:layout_marginStart="@dimen/margin_12"
             android:layout_weight="1"
+            android:ellipsize="end"
+            android:maxLines="1"
             android:text="@string/text_edit_note"
-            android:textColor="@color/black"
-            android:textSize="@dimen/text_20"
+            android:textColor="?attr/colorPrimary"
+            android:textSize="@dimen/text_18"
             android:textStyle="bold" />
 
+        <!-- Pin Button -->
         <ImageButton
             android:id="@+id/btnPin"
-            android:layout_width="@dimen/size_48"
-            android:layout_height="@dimen/size_48"
+            android:layout_width="@dimen/size_40"
+            android:layout_height="@dimen/size_40"
             android:layout_marginEnd="@dimen/margin_8"
             android:background="?attr/selectableItemBackgroundBorderless"
             android:contentDescription="@string/text_note_pinned"
+            android:padding="8dp"
             android:src="@drawable/ic_unpinned"
-            app:tint="@color/black" />
+            app:tint="?attr/colorPrimary" />
 
-        <Button
+        <!-- Save Checkmark Icon Button -->
+        <ImageButton
             android:id="@+id/btnSave"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:backgroundTint="@color/tabSelectedTextColorLight"
-            android:text="@string/text_save"
-            android:textAllCaps="false"
-            android:textColor="@color/black"
-            android:textStyle="bold"
-            app:cornerRadius="@dimen/radius_24" />
+            android:layout_width="@dimen/size_40"
+            android:layout_height="@dimen/size_40"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:contentDescription="@string/text_save"
+            android:padding="8dp"
+            android:src="@drawable/ic_check"
+            app:tint="?attr/colorPrimary" />
 
     </LinearLayout>
 
@@ -65,19 +70,19 @@
         android:layout_height="0dp"
         android:visibility="gone" />
 
+    <!-- Fixed Top Container (Categories, Title & Metadata) -->
     <LinearLayout
         android:id="@+id/fixedTopContainer"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_below="@id/headerLayout"
         android:orientation="vertical"
-        android:paddingHorizontal="@dimen/padding_20">
+        android:paddingHorizontal="@dimen/padding_16">
 
         <HorizontalScrollView
             android:id="@+id/categoryScrollView"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="@dimen/margin_8"
             android:scrollbars="none">
 
             <com.google.android.material.chip.ChipGroup
@@ -92,28 +97,50 @@
         <EditText
             android:id="@+id/etTitle"
             android:layout_width="match_parent"
-            android:layout_height="@dimen/size_48"
-            android:layout_marginTop="@dimen/margin_16"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
             android:autofillHints="@null"
             android:background="@android:color/transparent"
             android:hint="@string/text_enter_the_title"
-            android:textColorHint="@color/textColorSecondary"
             android:inputType="textCapSentences"
-            android:maxWidth="600dp"
             android:textColor="?attr/colorPrimary"
-            android:textSize="@dimen/text_22" />
+            android:textColorHint="@color/textColorSecondary"
+            android:textSize="@dimen/text_22"
+            android:textStyle="bold" />
+
+        <!-- Metadata Line (Edited Timestamp & Word Count) -->
+        <TextView
+            android:id="@+id/tvMetadata"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:ellipsize="end"
+            android:maxLines="1"
+            android:textColor="@color/grey_400"
+            android:textSize="12sp"
+            android:textStyle="italic" />
+
     </LinearLayout>
 
-    <WebView
+    <!-- Rich Text WYSIWYG Editor View -->
+    <EditText
         android:id="@+id/etNote"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:layout_above="@+id/ckeditor_toolbar_container"
         android:layout_below="@id/fixedTopContainer"
-        android:layout_marginHorizontal="@dimen/padding_20"
-        android:layout_marginTop="@dimen/margin_8"
-        android:background="@android:color/transparent" />
+        android:layout_marginHorizontal="@dimen/padding_16"
+        android:layout_marginTop="8dp"
+        android:background="@android:color/transparent"
+        android:gravity="top|start"
+        android:hint="@string/text_empty_notes_subtitle"
+        android:inputType="textMultiLine|textCapSentences"
+        android:scrollbars="vertical"
+        android:textColor="?attr/colorPrimary"
+        android:textColorHint="@color/grey_400"
+        android:textSize="@dimen/text_16" />
 
+    <!-- Bottom Container (Formatting Bar + Keyboard Spacer) -->
     <LinearLayout
         android:id="@+id/ckeditor_toolbar_container"
         android:layout_width="match_parent"
@@ -121,12 +148,13 @@
         android:layout_alignParentBottom="true"
         android:orientation="vertical">
 
+        <!-- Formatting Toolbar -->
         <HorizontalScrollView
             android:id="@+id/ckeditor_toolbar_scroll"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginHorizontal="@dimen/margin_16"
-            android:layout_marginBottom="@dimen/margin_16"
+            android:layout_marginBottom="@dimen/margin_12"
             android:background="@drawable/bg_primary_rounded_24"
             android:backgroundTint="@color/grey_900"
             android:fillViewport="true"
@@ -143,102 +171,111 @@
 
                 <ImageButton
                     android:id="@+id/btnUndo"
-                    android:layout_width="@dimen/size_48"
-                    android:layout_height="@dimen/size_48"
+                    android:layout_width="@dimen/size_40"
+                    android:layout_height="@dimen/size_40"
                     android:layout_marginHorizontal="@dimen/margin_4"
                     android:background="@drawable/selector_item_background"
                     android:contentDescription="@string/text_undo"
+                    android:padding="8dp"
                     android:src="@drawable/ic_undo"
                     app:tint="@color/white" />
 
                 <ImageButton
                     android:id="@+id/btnRedo"
-                    android:layout_width="@dimen/size_48"
-                    android:layout_height="@dimen/size_48"
+                    android:layout_width="@dimen/size_40"
+                    android:layout_height="@dimen/size_40"
                     android:layout_marginHorizontal="@dimen/margin_4"
                     android:background="@drawable/selector_item_background"
                     android:contentDescription="@string/text_redo"
+                    android:padding="8dp"
                     android:src="@drawable/ic_redo"
                     app:tint="@color/white" />
 
                 <ImageButton
                     android:id="@+id/btnColorPicker"
-                    android:layout_width="@dimen/size_48"
-                    android:layout_height="@dimen/size_48"
-                    android:layout_marginHorizontal="@dimen/margin_8"
+                    android:layout_width="@dimen/size_40"
+                    android:layout_height="@dimen/size_40"
+                    android:layout_marginHorizontal="@dimen/margin_4"
                     android:background="@drawable/bg_circle_fill"
                     android:contentDescription="@string/text_color_picker"
-                    android:padding="@dimen/padding_10"
+                    android:padding="8dp"
                     android:scaleType="centerInside"
                     android:src="@drawable/ic_color_picker" />
 
                 <ImageButton
                     android:id="@+id/btn_bold"
-                    android:layout_width="@dimen/size_48"
-                    android:layout_height="@dimen/size_48"
+                    android:layout_width="@dimen/size_40"
+                    android:layout_height="@dimen/size_40"
                     android:layout_marginHorizontal="@dimen/margin_4"
                     android:background="@drawable/selector_item_background"
                     android:contentDescription="@string/text_text_bold"
+                    android:padding="8dp"
                     android:src="@drawable/ic_format_bold"
                     app:tint="@color/white" />
 
                 <ImageButton
                     android:id="@+id/btnItalic"
-                    android:layout_width="@dimen/size_48"
-                    android:layout_height="@dimen/size_48"
+                    android:layout_width="@dimen/size_40"
+                    android:layout_height="@dimen/size_40"
                     android:layout_marginHorizontal="@dimen/margin_4"
                     android:background="@drawable/selector_item_background"
                     android:contentDescription="@string/text_text_italic"
+                    android:padding="8dp"
                     android:src="@drawable/ic_format_italic"
                     app:tint="@color/white" />
 
                 <ImageButton
                     android:id="@+id/btnBulletList"
-                    android:layout_width="@dimen/size_48"
-                    android:layout_height="@dimen/size_48"
+                    android:layout_width="@dimen/size_40"
+                    android:layout_height="@dimen/size_40"
                     android:layout_marginHorizontal="@dimen/margin_4"
                     android:background="@drawable/selector_item_background"
                     android:contentDescription="@string/text_bullet_list"
+                    android:padding="8dp"
                     android:src="@drawable/ic_format_list_bulleted"
                     app:tint="@color/white" />
 
                 <ImageButton
                     android:id="@+id/btnNumberedList"
-                    android:layout_width="@dimen/size_48"
-                    android:layout_height="@dimen/size_48"
+                    android:layout_width="@dimen/size_40"
+                    android:layout_height="@dimen/size_40"
                     android:layout_marginHorizontal="@dimen/margin_4"
                     android:background="@drawable/selector_item_background"
                     android:contentDescription="@string/text_number_list"
+                    android:padding="8dp"
                     android:src="@drawable/ic_format_number_list"
                     app:tint="@color/white" />
 
                 <ImageButton
                     android:id="@+id/btnChecklist"
-                    android:layout_width="@dimen/size_48"
+                    android:layout_width="@dimen/size_40"
                     android:layout_height="@dimen/size_40"
                     android:layout_marginHorizontal="@dimen/margin_4"
                     android:background="@drawable/selector_item_background"
                     android:contentDescription="@string/text_checkbox"
+                    android:padding="8dp"
                     android:src="@drawable/ic_check"
                     app:tint="@color/white" />
 
                 <ImageButton
                     android:id="@+id/btnH1"
-                    android:layout_width="@dimen/size_48"
-                    android:layout_height="@dimen/size_48"
+                    android:layout_width="@dimen/size_40"
+                    android:layout_height="@dimen/size_40"
                     android:layout_marginHorizontal="@dimen/margin_4"
                     android:background="@drawable/selector_item_background"
                     android:contentDescription="@string/text_h1_format"
+                    android:padding="8dp"
                     android:src="@drawable/ic_h1"
                     app:tint="@color/white" />
 
                 <ImageButton
                     android:id="@+id/btnH2"
-                    android:layout_width="@dimen/size_48"
-                    android:layout_height="@dimen/size_48"
+                    android:layout_width="@dimen/size_40"
+                    android:layout_height="@dimen/size_40"
                     android:layout_marginHorizontal="@dimen/margin_4"
                     android:background="@drawable/selector_item_background"
                     android:contentDescription="@string/text_h2_text"
+                    android:padding="8dp"
                     android:src="@drawable/ic_h2"
                     app:tint="@color/white" />
 

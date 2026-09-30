@@ -37,6 +37,8 @@
 
     <color name="ripple_color">#33000000</color>
 
+    <color name="nav_top_border_color">#E0E0E0</color>
+
     <color name="red">#EA4335</color>
 
 </resources>

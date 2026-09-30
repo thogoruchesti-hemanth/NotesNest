@@ -4,65 +4,93 @@
     xmlns:ads="http://schemas.android.com/apk/res-auto"
     android:id="@+id/notes_fragment"
     android:layout_width="match_parent"
-    android:layout_height="match_parent">
+    android:layout_height="match_parent"
+    android:clipChildren="false"
+    android:clipToPadding="false">
 
-    <androidx.cardview.widget.CardView
-        android:id="@+id/searchLayout"
+    <LinearLayout
+        android:id="@+id/topHeaderContainer"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginHorizontal="@dimen/margin_16"
-        android:layout_marginVertical="@dimen/margin_8"
-        app:cardCornerRadius="@dimen/radius_12"
-        app:cardElevation="@dimen/elevation_4"
+        android:clipChildren="false"
+        android:clipToPadding="false"
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:paddingHorizontal="@dimen/padding_16"
+        android:paddingTop="@dimen/padding_8"
+        android:paddingBottom="@dimen/padding_4"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent">
 
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="@dimen/size_48"
-            android:background="@android:color/white"
-            android:gravity="center_vertical"
-            android:orientation="horizontal"
-            android:paddingVertical="@dimen/padding_12">
+        <androidx.cardview.widget.CardView
+            android:id="@+id/searchLayout"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            app:cardCornerRadius="12dp"
+            app:cardElevation="3dp"
+            app:cardUseCompatPadding="true">
 
-            <ImageView
-                android:id="@+id/searchIcon"
-                android:layout_width="@dimen/size_24"
-                android:layout_height="@dimen/size_24"
-                android:layout_marginStart="@dimen/margin_10"
-                android:contentDescription="@string/text_search_icon"
-                android:src="@drawable/ic_search" />
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="@dimen/size_48"
+                android:background="@android:color/white"
+                android:gravity="center_vertical"
+                android:orientation="horizontal"
+                android:paddingHorizontal="@dimen/padding_8">
 
-            <EditText
-                android:id="@+id/searchEditText"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_marginStart="@dimen/margin_8"
-                android:layout_weight="1"
-                android:background="@android:color/transparent"
-                android:cursorVisible="true"
-                android:hint="@string/text_search_your_notes"
-                android:imeOptions="actionSearch"
-                android:importantForAutofill="no"
-                android:inputType="text"
-                android:maxLines="1"
-                android:textColor="@color/black"
-                android:textColorHint="@color/grey_400"
-                android:textCursorDrawable="@drawable/search_cursor"
-                android:textSize="16sp" />
+                <ImageView
+                    android:id="@+id/searchIcon"
+                    android:layout_width="@dimen/size_20"
+                    android:layout_height="@dimen/size_20"
+                    android:layout_marginStart="@dimen/margin_8"
+                    android:contentDescription="@string/text_search_icon"
+                    android:src="@drawable/ic_search"
+                    app:tint="@color/grey_400" />
 
-            <ImageButton
-                android:id="@+id/clearSearchBtn"
-                android:layout_width="@dimen/size_24"
-                android:layout_height="@dimen/size_24"
-                android:layout_marginEnd="@dimen/margin_10"
-                android:backgroundTint="@android:color/transparent"
-                android:contentDescription="@string/text_close"
-                android:src="@drawable/ic_close"
-                android:visibility="gone" />
-        </LinearLayout>
-    </androidx.cardview.widget.CardView>
+                <EditText
+                    android:id="@+id/searchEditText"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="@dimen/margin_8"
+                    android:layout_weight="1"
+                    android:background="@android:color/transparent"
+                    android:cursorVisible="true"
+                    android:hint="@string/text_search_your_notes"
+                    android:imeOptions="actionSearch"
+                    android:importantForAutofill="no"
+                    android:inputType="text"
+                    android:maxLines="1"
+                    android:textColor="@color/black"
+                    android:textColorHint="@color/grey_400"
+                    android:textCursorDrawable="@drawable/search_cursor"
+                    android:textSize="15sp" />
+
+                <ImageButton
+                    android:id="@+id/clearSearchBtn"
+                    android:layout_width="@dimen/size_20"
+                    android:layout_height="@dimen/size_20"
+                    android:layout_marginEnd="@dimen/margin_8"
+                    android:background="?attr/selectableItemBackgroundBorderless"
+                    android:contentDescription="@string/text_close"
+                    android:src="@drawable/ic_close"
+                    android:visibility="gone"
+                    app:tint="@color/grey_400" />
+            </LinearLayout>
+        </androidx.cardview.widget.CardView>
+
+        <ImageButton
+            android:id="@+id/btnLayoutToggle"
+            android:layout_width="@dimen/size_40"
+            android:layout_height="@dimen/size_40"
+            android:layout_marginStart="4dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:contentDescription="@string/app_name"
+            android:padding="@dimen/padding_8"
+            android:src="@drawable/ic_grid_view"
+            app:tint="?attr/colorPrimary" />
+    </LinearLayout>
 
     <androidx.appcompat.widget.LinearLayoutCompat
         android:id="@+id/tabContainer"
@@ -73,7 +101,7 @@
         android:paddingVertical="@dimen/padding_6"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/searchLayout">
+        app:layout_constraintTop_toBottomOf="@id/topHeaderContainer">
 
         <FrameLayout
             android:layout_width="0dp"
@@ -89,6 +117,8 @@
                 app:tabIndicatorFullWidth="false"
                 app:tabIndicatorHeight="@dimen/size_3"
                 app:tabMode="scrollable"
+                app:tabPaddingStart="@dimen/padding_16"
+                app:tabPaddingEnd="@dimen/padding_16"
                 app:tabRippleColor="@android:color/transparent" />
 
             <View
@@ -114,36 +144,26 @@
 
     <TextView
         android:id="@+id/tvTitle"
-        android:layout_width="0dp"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginHorizontal="@dimen/margin_20"
+        android:layout_marginHorizontal="@dimen/margin_16"
         android:layout_marginVertical="@dimen/margin_10"
         android:ellipsize="end"
         android:maxLines="1"
+        android:singleLine="true"
         android:textColor="?attr/colorPrimary"
         android:textSize="@dimen/text_36"
         android:textStyle="bold"
-        app:layout_constraintEnd_toStartOf="@+id/btnCreate"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/tabContainer" />
-
-    <Button
-        android:id="@+id/btnCreate"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginEnd="@dimen/margin_30"
-        android:backgroundTint="@color/tabSelectedTextColor"
-        android:text="@string/text_create"
-        android:textColor="@color/black"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintLeft_toRightOf="@+id/tvTitle"
+        app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@id/tabContainer" />
 
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/recyclerView"
         android:layout_width="match_parent"
         android:layout_height="0dp"
-        android:layout_marginHorizontal="@dimen/margin_10"
+        android:clipToPadding="false"
+        android:paddingHorizontal="12dp"
         android:layout_marginBottom="@dimen/margin_10"
         app:layout_constraintBottom_toTopOf="@id/adViewNotes"
         app:layout_constraintEnd_toEndOf="parent"

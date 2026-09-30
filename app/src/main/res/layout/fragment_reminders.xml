@@ -5,14 +5,16 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:padding="@dimen/padding_20"
+    android:paddingHorizontal="@dimen/padding_16"
+    android:paddingBottom="@dimen/padding_20"
+    android:paddingTop="@dimen/padding_4"
     tools:context=".fragments.RemindersFragment">
 
     <TextView
         android:id="@+id/tvSelectedDate"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="@dimen/margin_10"
+        android:layout_marginTop="@dimen/margin_4"
         android:drawablePadding="@dimen/padding_12"
         android:textSize="@dimen/text_20"
         android:textStyle="bold"
@@ -24,7 +26,7 @@
         android:id="@+id/tvPrompt"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="@dimen/margin_6"
+        android:layout_marginTop="@dimen/margin_4"
         android:textColor="@color/textColor"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/tvSelectedDate" />
@@ -33,7 +35,7 @@
         android:id="@+id/createButton"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="@dimen/margin_10"
+        android:layout_marginTop="@dimen/margin_4"
         android:backgroundTint="@color/tabSelectedTextColor"
         android:text="@string/text_create"
         android:textColor="@color/black"
